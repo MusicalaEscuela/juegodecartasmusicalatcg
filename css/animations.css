@@ -1,0 +1,285 @@
+/* =========================================================
+   animations.css
+   Juego de Cartas Musicala
+   Animaciones suaves, táctiles y elegantes (sin marear gente)
+   ✅ Fix flip 3D: rota .card-inner, no el contenedor .card
+   ✅ Evita que hover/active peleen con el flip
+   ✅ Usa transform en capas separadas (container vs inner)
+   ✅ Accesibilidad: reduced motion + focus-visible
+========================================================= */
+
+/* =============================
+   Variables de animación
+============================= */
+
+:root {
+  --ease-smooth: cubic-bezier(.22, .61, .36, 1);
+  --ease-pop: cubic-bezier(.34, 1.56, .64, 1);
+  --ease-soft: cubic-bezier(.2, .8, .2, 1);
+
+  --duration-fast: 120ms;
+  --duration-normal: 280ms;
+  --duration-slow: 480ms;
+
+  /* 3D */
+  --card-perspective: 1000px;
+  --card-flip-duration: 420ms;
+
+  /* Glow fallback */
+  --glow-color: rgba(12, 65, 196, .35);
+}
+
+/* =============================
+   Fade In / Fade Out
+============================= */
+
+.fade-in {
+  animation: fadeIn var(--duration-normal) var(--ease-smooth) both;
+}
+
+.fade-out {
+  animation: fadeOut var(--duration-fast) var(--ease-soft) both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
+
+/* =============================
+   Card Flip (3D) - CORRECTO
+   Estructura esperada:
+     .card
+       .card-inner
+         .card-front
+         .card-back
+============================= */
+
+/* El contenedor maneja perspectiva y “micro movimientos” (hover/tap) */
+.card {
+  perspective: var(--card-perspective);
+  -webkit-tap-highlight-color: transparent;
+  will-change: transform;
+  transform: translateZ(0); /* fuerza capa */
+}
+
+/* El que rota es el inner */
+.card .card-inner {
+  transform-style: preserve-3d;
+  transition: transform var(--card-flip-duration) var(--ease-smooth);
+  will-change: transform;
+}
+
+/* Caras: evita que se vea el “reverso” fantasma */
+.card .card-front,
+.card .card-back {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+/* La back debe estar rotada, para que al girar el inner aparezca bien */
+.card .card-back {
+  transform: rotateY(180deg);
+}
+
+/* Estado flipped */
+.card.flipped .card-inner {
+  transform: rotateY(180deg);
+}
+
+/* =============================
+   Hover Elevation (desktop)
+   Importante: NO tocamos .card-inner aquí, para no pelear con el flip
+============================= */
+
+@media (hover: hover) and (pointer: fine) {
+  .card:hover {
+    transform: translateY(-6px) scale(1.02);
+    transition: transform var(--duration-fast) var(--ease-smooth);
+  }
+}
+
+/* =============================
+   Tap Feedback (mobile)
+   De nuevo: solo el contenedor, no el inner
+============================= */
+
+.card:active {
+  transform: scale(0.97);
+  transition: transform var(--duration-fast) var(--ease-soft);
+}
+
+/* =============================
+   Focus styles (teclado)
+============================= */
+
+.card:focus,
+.card:focus-visible {
+  outline: none;
+}
+
+.card:focus-visible {
+  box-shadow:
+    0 0 0 3px rgba(12, 65, 196, .25),
+    0 10px 30px rgba(10,20,60,.12);
+}
+
+/* =============================
+   Draw Card Animation
+   (Entra a mano)
+============================= */
+
+.card.draw-in {
+  animation: drawIn var(--duration-slow) var(--ease-smooth) both;
+}
+
+@keyframes drawIn {
+  from {
+    opacity: 0;
+    transform: translateY(36px) scale(.86) rotate(-4deg);
+    filter: blur(1px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+/* =============================
+   Play To Board Animation
+============================= */
+
+.card.played {
+  animation: playToBoard var(--duration-normal) var(--ease-pop) both;
+}
+
+@keyframes playToBoard {
+  from {
+    transform: scale(.84) translateY(18px);
+    opacity: .6;
+  }
+  to {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+/* =============================
+   Shake (invalid action)
+   Solo “agita” el contenedor para no romper flip
+============================= */
+
+.shake {
+  animation: shake 420ms var(--ease-soft);
+}
+
+@keyframes shake {
+  0%   { transform: translateX(0); }
+  18%  { transform: translateX(-6px); }
+  36%  { transform: translateX(6px); }
+  54%  { transform: translateX(-4px); }
+  72%  { transform: translateX(4px); }
+  100% { transform: translateX(0); }
+}
+
+/* =============================
+   Glow Highlight
+============================= */
+
+.card.highlight {
+  animation: glowPulse 1.8s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%   { box-shadow: 0 0 0 rgba(12, 65, 196, 0); }
+  50%  { box-shadow: 0 0 18px var(--glow-color); }
+  100% { box-shadow: 0 0 0 rgba(12, 65, 196, 0); }
+}
+
+/* =============================
+   Subtle “press” for buttons/cards
+   (utilidad general)
+============================= */
+
+.pop-in {
+  animation: popIn var(--duration-normal) var(--ease-pop) both;
+}
+
+@keyframes popIn {
+  from { transform: scale(.96); opacity: .7; }
+  to   { transform: scale(1); opacity: 1; }
+}
+
+/* =============================
+   Modal Animations
+============================= */
+
+.modal-enter {
+  animation: modalEnter var(--duration-normal) var(--ease-smooth) both;
+}
+
+.modal-exit {
+  animation: modalExit var(--duration-fast) var(--ease-soft) both;
+}
+
+@keyframes modalEnter {
+  from {
+    opacity: 0;
+    transform: scale(.92) translateY(10px);
+    filter: blur(2px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+@keyframes modalExit {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(.96); }
+}
+
+/* =============================
+   Overlay Spinner
+============================= */
+
+.spinner {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 3px solid rgba(12, 65, 196, .15);
+  border-top: 3px solid var(--brand, #0C41C4);
+  animation: spin 800ms linear infinite;
+  will-change: transform;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* =============================
+   Reduced Motion Accessibility
+============================= */
+
+@media (prefers-reduced-motion: reduce) {
+  :root{
+    --duration-fast: 0.001ms;
+    --duration-normal: 0.001ms;
+    --duration-slow: 0.001ms;
+    --card-flip-duration: 0.001ms;
+  }
+
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,0 +1,44 @@
+// ================================================================
+// MUSICALA – Firestore Security Rules
+// Pega estas reglas en Firebase Console > Firestore > Rules
+// ================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Salas ─────────────────────────────────────────────────────
+    match /rooms/{roomCode} {
+
+      // Cualquier usuario autenticado puede leer la sala
+      allow read: if request.auth != null;
+
+      // Crear sala: solo autenticado, y el hostUid debe ser el tuyo
+      allow create: if request.auth != null
+                    && request.resource.data.hostUid == request.auth.uid;
+
+      // Actualizar sala:
+      // - Unirse: puedes agregar tu propio jugador al array
+      // - Iniciar partida: solo el host puede cambiar status a 'playing'
+      // - Actualizar gameState: solo jugadores de la sala
+      allow update: if request.auth != null
+                    && isPlayerInRoom(resource.data.players, request.auth.uid);
+
+      // Borrar sala: solo el host
+      allow delete: if request.auth != null
+                    && resource.data.hostUid == request.auth.uid;
+
+      // ── Manos privadas (sub-colección) ─────────────────────────
+      match /hands/{playerUid} {
+        // Solo el jugador dueño puede leer/escribir su propia mano
+        allow read, write: if request.auth != null
+                           && request.auth.uid == playerUid;
+      }
+    }
+
+    // Función helper
+    function isPlayerInRoom(players, uid) {
+      return players != null && uid in players.map(p => p.uid);
+    }
+  }
+}

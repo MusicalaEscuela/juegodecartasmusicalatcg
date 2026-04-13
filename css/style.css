@@ -1,11 +1,11 @@
 /* ===================================================
-   MUSICALA – style.css  v4
-   Ajustado para:
-   - quitar action-bar
-   - carta central completa
-   - menú hamburguesa funcional
-   - menú contextual de cartas
-   - layout más limpio y responsive
+   MUSICALA – style.css  v4.1 (fixed)
+   Fixes:
+   - #screen-game visible on intro → explicit display:none
+   - action-bar removed from layout
+   - active-note-card no longer clipped
+   - game-body distributes space correctly
+   - minor flex/overflow cleanups
    =================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap');
@@ -122,18 +122,40 @@ button {
 
 /* ══════════════════════════════════════════
    SCREEN SYSTEM
+   FIX: explicit display:none on all screens,
+   only .active gets display:flex.
+   Removed duplicate height:100vh from .screen.active
+   (each screen handles its own sizing).
 ══════════════════════════════════════════ */
 .screen {
-  display: none;
+  display: none !important;
   overflow: hidden;
   position: relative;
   z-index: 1;
 }
 
 .screen.active {
-  display: flex;
+  display: flex !important;
   flex-direction: column;
-  min-height: 100vh;
+  min-height: 100dvh;          /* prefer dvh to avoid mobile bar issues */
+  min-height: 100vh;           /* fallback */
+  overflow: hidden;
+}
+
+/* ══════════════════════════════════════════
+   ACTION-BAR — FULLY REMOVED FROM LAYOUT
+   FIX: hides any .action-bar element completely
+   so it takes no space and doesn't interfere.
+══════════════════════════════════════════ */
+.action-bar,
+#action-bar {
+  display: none !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  pointer-events: none !important;
 }
 
 /* ══════════════════════════════════════════
@@ -664,6 +686,9 @@ button {
 
 /* ══════════════════════════════════════════
    GAME SCREEN
+   FIX: height/overflow managed here exclusively.
+   .screen.active no longer sets height:100vh to
+   avoid double-constraining.
 ══════════════════════════════════════════ */
 #screen-game {
   background:
@@ -671,9 +696,8 @@ button {
     radial-gradient(ellipse 50% 40% at 85% 80%, rgba(0,130,90,0.10) 0%, transparent 55%),
     radial-gradient(ellipse 40% 30% at 50% 50%, rgba(12,65,196,0.08) 0%, transparent 60%),
     #06071a;
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
+  height: 100dvh;
+  height: 100vh; /* fallback */
   overflow: hidden;
 }
 
@@ -691,6 +715,7 @@ button {
   position: relative;
   z-index: 30;
   min-height: var(--header-h);
+  height: var(--header-h);
 }
 
 .header-logo {
@@ -831,15 +856,21 @@ button {
   transform: translateY(-1px);
 }
 
-/* Game body */
+/* ══════════════════════════════════════════
+   GAME BODY
+   FIX: uses calc to fill exactly the remaining
+   height after the header. No scroll on body itself.
+   Each zone has correct flex sizing.
+══════════════════════════════════════════ */
 .game-body {
   display: flex;
   flex-direction: column;
-  flex: 1;
-  min-height: 0;
+  height: calc(100vh - var(--header-h));
+  height: calc(100dvh - var(--header-h));
   overflow: hidden;
   gap: 8px;
   padding: 8px 10px 10px;
+  min-height: 0;
 }
 
 /* Opponents */
@@ -848,6 +879,7 @@ button {
   gap: 7px;
   flex-shrink: 0;
   overflow-x: auto;
+  overflow-y: visible;
   padding-bottom: 2px;
   scrollbar-width: none;
 }
@@ -1007,13 +1039,18 @@ button {
   color: white;
 }
 
-/* Center board */
+/* ══════════════════════════════════════════
+   CENTER BOARD
+   FIX: flex-shrink:0 so it's never compressed.
+   overflow:visible so card shadows show fully.
+══════════════════════════════════════════ */
 .center-board {
   display: grid;
   grid-template-columns: auto 1fr auto;
   gap: 14px;
   align-items: center;
   flex-shrink: 0;
+  overflow: visible;
   min-height: 0;
 }
 
@@ -1023,6 +1060,7 @@ button {
   flex-direction: column;
   align-items: center;
   gap: 5px;
+  flex-shrink: 0;
 }
 
 /* Deck */
@@ -1035,6 +1073,7 @@ button {
   border: 2px solid var(--border-mid);
   transition: transform 0.2s var(--ease-spring), box-shadow 0.2s;
   position: relative;
+  flex-shrink: 0;
 }
 
 .deck-pile:hover {
@@ -1093,6 +1132,7 @@ button {
   align-items: center;
   justify-content: center;
   background: rgba(0,0,0,0.2);
+  flex-shrink: 0;
 }
 
 .discard-label {
@@ -1102,19 +1142,31 @@ button {
   text-transform: uppercase;
 }
 
-/* Active center card */
+/* ══════════════════════════════════════════
+   ACTIVE CENTER CARD
+   FIX: removed fixed width constraint.
+   Card now fills available space in board-center
+   while preserving aspect-ratio. max-height
+   prevents it overflowing on tall screens.
+══════════════════════════════════════════ */
 .board-center {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 8px;
   min-width: 0;
+  min-height: 0;
+  overflow: visible;
 }
 
 .active-note-card {
-  width: min(100%, 240px);
+  /* Preserve card aspect ratio at all times */
   aspect-ratio: 63 / 88;
-  min-height: 0;
+  /* Fill available horizontal space, cap at sensible max */
+  width: min(100%, 230px);
+  max-height: clamp(120px, 28vh, 260px);
+  /* Prevent flex squishing */
+  flex-shrink: 0;
   border-radius: 20px;
   border: 2px solid rgba(255,255,255,0.18);
   box-shadow:
@@ -1144,7 +1196,7 @@ button {
 
 .active-note-name {
   font-family: var(--font-title);
-  font-size: clamp(44px, 8vw, 64px);
+  font-size: clamp(36px, 7vw, 56px);
   color: white;
   line-height: 1;
   text-shadow: 0 0 24px rgba(255,255,255,0.5);
@@ -1264,7 +1316,11 @@ button {
   color: white;
 }
 
-/* Player hand */
+/* ══════════════════════════════════════════
+   PLAYER HAND
+   FIX: flex:1 + min-height:0 correctly fills
+   remaining vertical space.
+══════════════════════════════════════════ */
 .player-hand-area {
   background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
   border: 1px solid var(--border-dim);
@@ -1338,6 +1394,7 @@ button {
   padding-bottom: 6px;
   padding-top: 18px;
   flex: 1;
+  min-height: 80px;       /* FIX: ensure cards are never fully squished */
   align-items: flex-end;
   scrollbar-width: thin;
   scrollbar-color: rgba(255,255,255,0.1) transparent;
@@ -2219,7 +2276,7 @@ button {
   }
 
   .active-note-card {
-    width: min(100%, 220px);
+    width: min(100%, 210px);
   }
 }
 
@@ -2249,7 +2306,8 @@ button {
   }
 
   .active-note-card {
-    width: min(100%, 190px);
+    width: min(100%, 185px);
+    max-height: clamp(110px, 26vh, 240px);
   }
 
   .active-note-label {
@@ -2303,23 +2361,10 @@ button {
     align-items: center;
   }
 
-  .player-row .player-num {
-    grid-area: num;
-  }
-
-  .player-row .player-name-input {
-    grid-area: input;
-  }
-
-  .player-row .player-type-toggle {
-    grid-area: toggle;
-    margin-left: 40px;
-  }
-
-  .player-row .btn-remove {
-    grid-area: remove;
-    justify-self: end;
-  }
+  .player-row .player-num      { grid-area: num; }
+  .player-row .player-name-input { grid-area: input; }
+  .player-row .player-type-toggle { grid-area: toggle; margin-left: 40px; }
+  .player-row .btn-remove      { grid-area: remove; justify-self: end; }
 
   .header-logo-img {
     height: 24px;
@@ -2362,12 +2407,13 @@ button {
   }
 
   .active-note-card {
-    width: min(100%, 165px);
-    border-radius: 16px;
+    width: min(100%, 155px);
+    max-height: clamp(100px, 24vh, 220px);
+    border-radius: 14px;
   }
 
   .active-note-name {
-    font-size: 40px;
+    font-size: 36px;
   }
 
   .history-strip {
@@ -2419,20 +2465,212 @@ button {
   }
 }
 
+/* FIX: reduced aggressiveness on max-height media query
+   so card doesn't get crushed on short screens */
 @media (max-height: 740px) {
   .opponents-row {
-    gap: 6px;
+    gap: 5px;
   }
 
   .opponent-slot {
-    padding: 8px 10px;
+    padding: 7px 10px;
   }
 
   .active-note-card {
-    width: min(100%, 175px);
+    width: min(100%, 158px);
+    max-height: clamp(90px, 22vh, 200px);
   }
 
   .hand-cards {
-    padding-top: 10px;
+    padding-top: 8px;
+    min-height: 64px;
   }
+}
+
+@media (max-height: 600px) {
+  .game-body {
+    gap: 5px;
+    padding: 5px 8px 6px;
+  }
+
+  .history-strip {
+    display: none; /* sacrifice on very short screens */
+  }
+
+  .active-note-card {
+    width: min(100%, 130px);
+    max-height: clamp(80px, 20vh, 170px);
+  }
+}
+
+/* ══════════════════════════════════════
+   CARD ACTION MENU
+══════════════════════════════════════ */
+
+.card-action-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 env(safe-area-inset-bottom, 0);
+}
+
+.card-action-overlay.open {
+  display: flex;
+  animation: camOverlayIn 0.18s ease;
+}
+
+@keyframes camOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.card-action-menu {
+  width: min(96vw, 420px);
+  background: linear-gradient(160deg, #14163a 0%, #0a0c22 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-bottom: none;
+  border-radius: 24px 24px 0 0;
+  box-shadow: 0 -8px 40px rgba(0,0,0,0.6);
+  padding: 0 0 28px;
+  animation: camSlideUp 0.22s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+@keyframes camSlideUp {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.cam-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px 12px;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+}
+
+.cam-card-name {
+  font-family: var(--font-title);
+  font-size: 20px;
+  color: white;
+  letter-spacing: 0.02em;
+}
+
+.cam-close {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.06);
+  color: var(--text-muted);
+  font-size: 15px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+
+.cam-close:hover {
+  background: rgba(255,255,255,0.14);
+  color: white;
+}
+
+.cam-preview {
+  display: flex;
+  justify-content: center;
+  padding: 16px 20px 10px;
+}
+
+.cam-preview-img {
+  width: min(100%, 180px);
+  max-height: 200px;
+  object-fit: contain;
+  border-radius: 14px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+}
+
+.cam-preview-icon {
+  width: 110px;
+  height: 150px;
+  border-radius: 14px;
+  background: var(--bg-panel2);
+  border: 1px solid var(--border-mid);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-title);
+  font-size: 40px;
+  color: white;
+}
+
+.cam-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 8px 20px 0;
+}
+
+.cam-btn {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  color: white;
+  cursor: pointer;
+  font-size: 17px;
+  font-family: var(--font-body);
+  font-weight: 600;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s, transform 0.1s;
+}
+
+.cam-btn:active {
+  transform: scale(0.97);
+}
+
+.cam-btn-icon {
+  font-size: 22px;
+  width: 32px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.cam-btn-view:hover,
+.cam-btn-view:focus {
+  background: rgba(87, 41, 255, 0.2);
+  border-color: rgba(87, 41, 255, 0.5);
+}
+
+.cam-btn-play {
+  background: rgba(12, 65, 196, 0.18);
+  border-color: rgba(12, 65, 196, 0.4);
+}
+
+.cam-btn-play:hover:not(:disabled),
+.cam-btn-play:focus:not(:disabled) {
+  background: rgba(12, 65, 196, 0.35);
+  border-color: rgba(12, 65, 196, 0.7);
+}
+
+.cam-btn-play:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.cam-invalid-hint {
+  margin: 10px 20px 0;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.25);
+  color: #f87171;
+  font-size: 13px;
+  text-align: center;
 }

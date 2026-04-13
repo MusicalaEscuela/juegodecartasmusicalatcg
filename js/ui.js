@@ -57,14 +57,13 @@ function showPlayerSelectModal(title, desc, excludeIdx, callback) {
 }
 
 // ── Pass-screen (local multiplayer) ──────────────────────────────────────────
-// Shows a "hand off the device" interstitial between human turns
 
 let _passScreenCallback = null;
 
 function showPassScreen(nextPlayerName, callback) {
   _passScreenCallback = callback;
   const el = document.getElementById('pass-screen-overlay');
-  if (!el) return callback(); // fallback
+  if (!el) return callback();
   document.getElementById('pass-screen-name').textContent = nextPlayerName;
   el.style.display = 'flex';
 }
@@ -105,11 +104,11 @@ function renderSetup() {
     `;
     grid.appendChild(row);
   });
+
   const btnAdd = document.getElementById('btn-add-player');
   btnAdd.disabled = setupPlayers.length >= 8;
   btnAdd.style.opacity = btnAdd.disabled ? '0.4' : '1';
 
-  // Show warning if multiple humans
   const humanCount = setupPlayers.filter(p => p.isHuman).length;
   let warn = document.getElementById('multi-human-note');
   if (!warn) {
@@ -163,9 +162,9 @@ function renderHeader() {
 function renderOpponents() {
   const row = document.getElementById('opponents-row');
   row.innerHTML = '';
-  const viewerIdx = G.currentPlayer; // show from current player's perspective
+  const viewerIdx = G.currentPlayer;
   G.players.forEach((p, i) => {
-    if (i === viewerIdx && p.isHuman) return; // don't show the active human in opponents
+    if (i === viewerIdx && p.isHuman) return;
     const slot = document.createElement('div');
     slot.className = 'opponent-slot'
       + (G.currentPlayer === i ? ' active-turn' : '')
@@ -197,7 +196,6 @@ function renderBoard() {
   card.style.background = NOTE_COLORS[G.currentNote] || '#555';
   card.style.boxShadow  = `0 0 40px ${NOTE_COLORS[G.currentNote] || '#5729FF'}66`;
 
-  // Show card image
   const imgSrc = `assets/cards/nota_${G.currentNote.toLowerCase()}.png`;
   noteImg.src = imgSrc;
   noteImg.alt = G.currentNote;
@@ -225,7 +223,6 @@ function renderHistory() {
   const strip = document.getElementById('history-entries');
   if (!strip || !G) return;
 
-  // Show last played notes as colorful chips + log text
   const recentLog = G.log.slice(0, 4);
   const chipsHtml = (G.noteHistory || []).slice(-MAX_HISTORY_CHIPS).map(note =>
     `<span class="seq-chip-inline" style="background:${NOTE_COLORS[note] || '#555'}">${note}</span>`
@@ -241,7 +238,6 @@ function renderHistory() {
 // ── Hand render ───────────────────────────────────────────────────────────────
 
 function renderHand() {
-  // In online mode, always show MY hand (not the current player's)
   const isOnline  = G._onlineMode;
   const playerIdx = isOnline ? ON.myIndex : (isHumanTurn() ? humanIndex() : G.currentPlayer);
   const player    = G.players[playerIdx];
@@ -254,9 +250,9 @@ function renderHand() {
   handCount.textContent = `${player.hand.length} carta${player.hand.length !== 1 ? 's' : ''}`;
   handLabel.textContent = player.name || 'Mano';
 
-  const isMy = isOnline ? isMyOnlineTurn() : isHumanTurn();
+  const isMy     = isOnline ? isMyOnlineTurn() : isHumanTurn();
   const realHand = isOnline ? ON.myHand : player.hand;
-  const mask = isMy ? getValidMask(realHand, G.currentNote, G.forcedDir) : [];
+  const mask     = isMy ? getValidMask(realHand, G.currentNote, G.forcedDir) : [];
 
   const needsMusicala = realHand.length === 1 && !player.musicalaAnnounced && isMy;
   btnMusicala.style.display = needsMusicala ? 'inline-block' : 'none';
@@ -266,11 +262,10 @@ function renderHand() {
   } else if (isMy) {
     const hasValid = mask.some(v => v);
     hint.textContent = hasValid
-      ? 'Toca para seleccionar, toca de nuevo para jugar. Doble toque o mantén presionada para ampliar. ¡O forma una escala de 3+ notas!'
+      ? 'Toca una carta válida para jugarla. Mantén presionada para ampliar.'
       : 'No tienes carta válida. Roba del mazo.';
   } else {
-    const waiting = isOnline ? G.players[G.currentPlayer].name : G.players[G.currentPlayer].name;
-    hint.textContent = `Esperando a ${waiting}…`;
+    hint.textContent = `Esperando a ${G.players[G.currentPlayer].name}…`;
   }
 
   container.innerHTML = '';
@@ -297,9 +292,11 @@ function buildCardElement(card, idx, interactive, mask) {
   else if (card.type === 'special') classes += ` card-special ${card.cssClass}`;
   else if (card.type === 'alt')     classes += ` card-alt ${card.cssClass}`;
 
+  const isImprov = G.phase === 'improvisacion';
+  let valid = false;
+
   if (interactive) {
-    const isImprov = G.phase === 'improvisacion';
-    const valid    = isImprov ? card.type === 'note' : (mask && mask[idx]);
+    valid    = isImprov ? card.type === 'note' : (mask && mask[idx]);
     classes += valid ? ' valid' : ' invalid';
     if (G.selectedCards && G.selectedCards.includes(idx)) classes += ' selected';
   }
@@ -338,22 +335,50 @@ function buildCardElement(card, idx, interactive, mask) {
     </div>
   `;
 
-  if (interactive) el.addEventListener('click', () => handleCardClick(idx));
+  if (interactive) {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (valid) {
+        // ── Carta válida: jugar directamente, sin pasar por el menú ──
+        handleCardClick(idx);
+      } else {
+        // ── Carta inválida: abrir el menú para mostrar el motivo ──
+        openCardActionMenu(card, idx, mask);
+      }
+    });
+  }
 
-  // Double-click or long-press → zoom to inspect
+  // Double-click → zoom directo
   el.addEventListener('dblclick', (e) => { e.stopPropagation(); openCardZoom(card); });
 
+  // Long-press (500 ms) → abre el CAM.
+  // Así las cartas válidas siguen teniendo acceso a "Ver carta" y "Jugar carta"
+  // aunque el tap corto las juegue directo.
   let pressTimer = null;
+  let _longFired = false;
   el.addEventListener('pointerdown', () => {
-    pressTimer = setTimeout(() => { openCardZoom(card); }, 500);
+    _longFired = false;
+    pressTimer = setTimeout(() => {
+      _longFired = true;
+      if (interactive) openCardActionMenu(card, idx, mask);
+      else             openCardZoom(card);
+    }, 500);
   });
-  el.addEventListener('pointerup',   () => clearTimeout(pressTimer));
-  el.addEventListener('pointerleave',() => clearTimeout(pressTimer));
+  el.addEventListener('pointerup', () => {
+    clearTimeout(pressTimer);
+    _longFired = false;
+  });
+  el.addEventListener('pointerleave', () => {
+    clearTimeout(pressTimer);
+    _longFired = false;
+  });
 
   return el;
 }
 
 // ── Card interaction ──────────────────────────────────────────────────────────
+// handleCardClick es llamado directamente desde buildCardElement (carta válida)
+// o desde el Card Action Menu (botón "Jugar carta").
 
 function handleCardClick(idx) {
   const isOnline = G && G._onlineMode;
@@ -401,7 +426,7 @@ function handleCardClick(idx) {
 
 function updateScaleButton() {
   const btn = document.getElementById('btn-play-scale');
-  if (!btn || !G || !isHumanTurn() || G.phase === 'improvisacion') { if(btn) btn.style.display = 'none'; return; }
+  if (!btn || !G || !isHumanTurn() || G.phase === 'improvisacion') { if (btn) btn.style.display = 'none'; return; }
   const hand = G.players[humanIndex()].hand;
   const sel  = G.selectedCards;
   if (sel.length >= 3) {
@@ -508,7 +533,7 @@ function toggleHelp() {
 
 function updateHelpTip() {
   if (!G) return;
-  const tip    = document.getElementById('help-tip');
+  const tip     = document.getElementById('help-tip');
   const tipNote = document.getElementById('help-tip-note');
   const tipUp   = document.getElementById('help-tip-up');
   const tipDown = document.getElementById('help-tip-down');
@@ -531,7 +556,6 @@ function updateHelpTip() {
 }
 
 // ── AI scheduling / turn orchestration ───────────────────────────────────────
-// Supports: all-CPU, one-human, multi-human local (pass-screen)
 
 let aiTimer = null;
 
@@ -539,23 +563,18 @@ function scheduleNextTurn() {
   if (G.winner) return;
 
   if (isHumanTurn()) {
-    // It's a human's turn now
-    const cur = G.players[G.currentPlayer];
-    const prevHuman = G.players.find((p, i) => p.isHuman && i !== G.currentPlayer);
+    const cur          = G.players[G.currentPlayer];
+    const prevHuman    = G.players.find((p, i) => p.isHuman && i !== G.currentPlayer);
     const isMultiHuman = G.players.filter(p => p.isHuman).length > 1;
 
     if (isMultiHuman && prevHuman) {
-      // Show pass-screen so previous player looks away
-      showPassScreen(cur.name, () => {
-        renderGame();
-      });
+      showPassScreen(cur.name, () => { renderGame(); });
     } else {
       renderGame();
     }
     return;
   }
 
-  // CPU turn
   if (aiTimer) clearTimeout(aiTimer);
   aiTimer = setTimeout(() => runAIStep(), 900);
 }
@@ -567,8 +586,7 @@ function runAIStep() {
   aiTurn(G.currentPlayer);
   renderGame();
   if (G.winner !== null) { setTimeout(() => showWinnerScreen(), 700); return; }
-  if (!isHumanTurn()) scheduleNextTurn();
-  else scheduleNextTurn(); // may trigger pass-screen
+  scheduleNextTurn();
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────────
@@ -578,7 +596,7 @@ function escHtml(str) {
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
-// ── Card Zoom (long-press / double-click to inspect) ──────────────────────────
+// ── Card Zoom ─────────────────────────────────────────────────────────────────
 
 function openCardZoom(card) {
   const overlay  = document.getElementById('card-zoom-overlay');
@@ -588,10 +606,10 @@ function openCardZoom(card) {
   const zoomType = document.getElementById('card-zoom-type');
   const zoomDesc = document.getElementById('card-zoom-desc');
 
-  const imgSrc   = getCardImageSrc(card);
-  const typeMap  = { note: 'Nota musical', alt: 'Alteración', special: 'Carta especial' };
-  const label    = card.type === 'note' ? card.note : (card.name || card.label || '');
-  const desc     = card.desc || '';
+  const imgSrc  = getCardImageSrc(card);
+  const typeMap = { note: 'Nota musical', alt: 'Alteración', special: 'Carta especial' };
+  const label   = card.type === 'note' ? card.note : (card.name || card.label || '');
+  const desc    = card.desc || '';
 
   if (imgSrc) {
     zoomImg.src = imgSrc;
@@ -612,4 +630,107 @@ function openCardZoom(card) {
 
 function closeCardZoom() {
   document.getElementById('card-zoom-overlay').classList.remove('open');
+}
+
+// ── Card Action Menu ──────────────────────────────────────────────────────────
+// Ahora solo se abre para cartas INVÁLIDAS (para mostrar el motivo).
+// Las cartas válidas se juegan directo desde buildCardElement → handleCardClick.
+// El botón "Jugar carta" dentro del menú sigue funcionando como antes
+// por si alguien accede al menú desde otro lado.
+
+let _camCard = null;
+let _camIdx  = null;
+
+function openCardActionMenu(card, idx, mask) {
+  _camCard = card;
+  _camIdx  = idx;
+
+  const isOnline = G && G._onlineMode;
+  const myTurn   = isOnline ? isMyOnlineTurn() : isHumanTurn();
+  const isImprov = G && G.phase === 'improvisacion';
+  const valid    = myTurn && (isImprov ? card.type === 'note' : (mask && mask[idx]));
+
+  // Nombre en el header
+  const label = card.type === 'note'
+    ? card.note
+    : (card.name || card.label || 'Carta especial');
+  document.getElementById('cam-card-name').textContent = label;
+
+  // Preview imagen
+  const imgSrc  = getCardImageSrc(card);
+  const camImg  = document.getElementById('cam-preview-img');
+  const camIcon = document.getElementById('cam-preview-icon');
+  if (imgSrc) {
+    camImg.src = imgSrc;
+    camImg.style.display = 'block';
+    camIcon.style.display = 'none';
+  } else {
+    camImg.style.display = 'none';
+    camIcon.style.display = 'flex';
+    camIcon.textContent = card.icon || label;
+  }
+
+  // Estado del botón "Jugar carta"
+  const btnPlay    = document.getElementById('cam-btn-play');
+  const hintEl     = document.getElementById('cam-invalid-hint');
+  const hintText   = document.getElementById('cam-invalid-text');
+  const playSub    = document.getElementById('cam-btn-play-sub');
+
+  if (!myTurn) {
+    btnPlay.disabled     = true;
+    hintEl.style.display = 'flex';
+    hintText.textContent = 'No es tu turno.';
+    if (playSub) playSub.textContent = 'Espera tu turno para jugar';
+  } else if (!valid) {
+    btnPlay.disabled     = true;
+    hintEl.style.display = 'flex';
+    hintText.textContent = 'Esta carta no es válida en este turno.';
+    if (playSub) playSub.textContent = 'No se puede jugar ahora';
+  } else {
+    btnPlay.disabled     = false;
+    hintEl.style.display = 'none';
+    if (playSub) playSub.textContent = 'Poner esta carta en juego';
+  }
+
+  document.getElementById('card-action-overlay').classList.add('open');
+}
+
+function closeCardActionMenu() {
+  document.getElementById('card-action-overlay').classList.remove('open');
+  _camCard = null;
+  _camIdx  = null;
+}
+
+function initCardActionMenu() {
+  const overlay = document.getElementById('card-action-overlay');
+  const menu    = document.getElementById('card-action-menu');
+
+  // Click fuera del panel → cerrar
+  overlay.addEventListener('click', (e) => {
+    if (!menu.contains(e.target)) closeCardActionMenu();
+  });
+
+  // Botón X
+  document.getElementById('cam-close').addEventListener('click', closeCardActionMenu);
+
+  // Botón "Ver carta"
+  document.getElementById('cam-btn-view').addEventListener('click', () => {
+    const card = _camCard;
+    closeCardActionMenu();
+    if (card) openCardZoom(card);
+  });
+
+  // Botón "Jugar carta"
+  document.getElementById('cam-btn-play').addEventListener('click', () => {
+    const idx = _camIdx;
+    closeCardActionMenu();
+    if (idx !== null) handleCardClick(idx);
+  });
+
+  // ESC cierra el menú
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && overlay.classList.contains('open')) {
+      closeCardActionMenu();
+    }
+  });
 }

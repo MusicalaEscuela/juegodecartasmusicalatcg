@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', () => {
   fontLink.href = 'https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;900&display=swap';
   document.head.appendChild(fontLink);
 
+  // ── Card Action Menu — inicializar eventos ────────────────────────────────
+  initCardActionMenu();
+
   // ── Intro ────────────────────────────────────────────────────────────────
   document.getElementById('btn-intro-play').addEventListener('click', () => {
     showScreen('screen-setup'); renderSetup();
@@ -23,7 +26,6 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-intro-online').addEventListener('click', async () => {
     showScreen('screen-online');
     await loadFirebase();
-    // Check if already logged in
     window.FB.onAuthStateChanged(window.FB.auth, (user) => {
       if (user) {
         ON.user = { uid: user.uid, name: user.displayName || 'Jugador', photoURL: user.photoURL };
@@ -54,7 +56,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-start').addEventListener('click', () => {
     if (setupPlayers.length < 2) { showToast('Necesitas al menos 2 jugadores.'); return; }
-    // Sync name inputs
     document.querySelectorAll('.player-name-input').forEach((inp, i) => {
       if (setupPlayers[i]) setupPlayers[i].name = inp.value.trim() || `Jugador ${i + 1}`;
     });
@@ -137,9 +138,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('modal-overlay').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeModal();
   });
+
 });
 
-// ── Start game ─────────────────────────────────────────────────────────────────
+// ── Start game ────────────────────────────────────────────────────────────────
 
 function startGame() {
   if (aiTimer) clearTimeout(aiTimer);

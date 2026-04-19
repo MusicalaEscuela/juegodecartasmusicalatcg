@@ -1,21 +1,21 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Musicala – Juego de Cartas</title>
+  <title>Musicala - Juego de Cartas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/card.css" />
   <link rel="stylesheet" href="css/animations.css" />
 
-  <!-- ══════════════════════════════════════════════
-       GAME EVENTS — CSS (equivalente a css/game-events.css)
-  ══════════════════════════════════════════════ -->
+  <!-- 
+       GAME EVENTS - CSS (equivalente a css/game-events.css)
+   -->
   <style id="game-events-css">
 
-    /* ── Event feed (toast stack) ──────────────────────────────── */
+    /*  Event feed (toast stack)  */
     #event-feed {
       position: fixed;
       top: 68px;
@@ -78,7 +78,7 @@
       padding: 10px 16px;
     }
 
-    /* ── Turn banner ───────────────────────────────────────────── */
+    /*  Turn banner  */
     #turn-banner {
       position: absolute;
       top: 50%;
@@ -112,7 +112,7 @@
       100% { opacity: 0; transform: translate(-50%,-50%) scale(0.92); }
     }
 
-    /* ── Active card pop ───────────────────────────────────────── */
+    /*  Active card pop  */
     @keyframes geCardPop {
       0%   { transform: scale(1);    filter: brightness(1);   }
       35%  { transform: scale(1.13); filter: brightness(1.35);}
@@ -124,7 +124,7 @@
       animation: geCardPop 0.38s cubic-bezier(0.34,1.4,0.64,1);
     }
 
-    /* ── Special effect label ──────────────────────────────────── */
+    /*  Special effect label  */
     #special-effect-label {
       position: absolute;
       bottom: -40px;
@@ -157,7 +157,7 @@
     #special-effect-label.t-draw    { background: rgba(104,13,191,0.94); }
     #special-effect-label.t-swap    { background: rgba(220,80,10,0.94);  }
 
-    /* ── Active opponent slot glow ─────────────────────────────── */
+    /*  Active opponent slot glow  */
     @keyframes geSlotGlow {
       0%,100% { box-shadow: 0 0 0 0   rgba(87,41,255,0);    }
       50%     { box-shadow: 0 0 0 8px rgba(87,41,255,0.28); }
@@ -167,7 +167,7 @@
       animation: geSlotGlow 1.5s ease-in-out infinite;
     }
 
-    /* ── Direction chip flash ──────────────────────────────────── */
+    /*  Direction chip flash  */
     @keyframes geChipFlash {
       0%   { transform: scale(1)    rotate(0deg);   filter: brightness(1);   }
       30%  { transform: scale(1.28) rotate(180deg); filter: brightness(1.7); }
@@ -183,9 +183,9 @@
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════
+<!-- 
      INTRO SCREEN
-══════════════════════════════════════════════ -->
+ -->
 <div id="screen-intro" class="screen active">
   <div class="intro-wrap">
 
@@ -203,51 +203,52 @@
         </svg>
         <span class="logo-text">musicala</span>
       </div>
-      <p class="logo-slogan">vida, alma y música</p>
+      <p class="logo-slogan">vida, alma y musica</p>
     </div>
 
     <div class="intro-hero">
-      <h1 class="intro-title">Afinadito te ves<br><strong>más bonito</strong></h1>
+      <h1 class="intro-title">Afinadito te ves<br><strong>mas bonito</strong></h1>
       <p class="intro-tagline">El juego de cartas musical de Musicala</p>
     </div>
 
     <div class="intro-description">
       <p>En <strong>Musicala</strong> cada jugador recibe 7 cartas y el objetivo es simple:
-      deshacerse de todas antes que los demás. Las cartas siguen la escala musical —
+      deshacerse de todas antes que los demas. Las cartas siguen la escala musical -
       DO, RE, MI, FA, SOL, LA, SI.</p>
-      <p>Hay <strong>cartas especiales</strong> que cambian el rumbo del juego y si te queda
-      solo 1 carta, debes gritar <strong>¡MUSICALA!</strong>…</p>
+      <p>Hay <strong>cartas especiales</strong> que cambian el rumbo del juego y pueden darle
+      la vuelta completa a la partida.</p>
     </div>
 
     <div class="intro-features">
-      <div class="intro-feature"><span class="feature-icon">🎵</span><span>2 a 8 músicos</span></div>
-      <div class="intro-feature"><span class="feature-icon">🃏</span><span>86 cartas únicas</span></div>
-      <div class="intro-feature"><span class="feature-icon">👥</span><span>Multijugador local</span></div>
-      <div class="intro-feature"><span class="feature-icon">🎼</span><span>Escalas musicales</span></div>
+      <div class="intro-feature"><span class="feature-icon"></span><span>2 a 8 musicos</span></div>
+      <div class="intro-feature"><span class="feature-icon"></span><span>86 cartas unicas</span></div>
+      <div class="intro-feature"><span class="feature-icon"></span><span>Multijugador local</span></div>
+      <div class="intro-feature"><span class="feature-icon"></span><span>Escalas musicales</span></div>
     </div>
 
     <div class="intro-scale-preview">
-      <span class="note-pill do">DO</span><span class="arrow">›</span>
-      <span class="note-pill re">RE</span><span class="arrow">›</span>
-      <span class="note-pill mi">MI</span><span class="arrow">›</span>
-      <span class="note-pill fa">FA</span><span class="arrow">›</span>
-      <span class="note-pill sol">SOL</span><span class="arrow">›</span>
-      <span class="note-pill la">LA</span><span class="arrow">›</span>
+      <span class="note-pill do">DO</span><span class="arrow">></span>
+      <span class="note-pill re">RE</span><span class="arrow">></span>
+      <span class="note-pill mi">MI</span><span class="arrow">></span>
+      <span class="note-pill fa">FA</span><span class="arrow">></span>
+      <span class="note-pill sol">SOL</span><span class="arrow">></span>
+      <span class="note-pill la">LA</span><span class="arrow">></span>
       <span class="note-pill si">SI</span>
     </div>
 
     <div class="intro-actions">
-      <button class="btn-primary btn-intro-main" id="btn-intro-play">🎮 Jugar local / CPU</button>
-      <button class="btn-online btn-intro-main" id="btn-intro-online">🌐 Jugar en línea</button>
+      <button class="btn-primary btn-intro-main" id="btn-intro-play">Jugar local / CPU</button>
+      <button class="btn-online btn-intro-main" id="btn-intro-online">Jugar en linea</button>
+      <button class="btn-secondary" id="btn-intro-library">Biblioteca de cartas</button>
       <button class="btn-secondary" id="btn-intro-rules">Ver reglas</button>
     </div>
 
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
+<!-- 
      ONLINE SCREEN (login + crear/unirse)
-══════════════════════════════════════════════ -->
+ -->
 <div id="screen-online" class="screen">
   <div class="setup-wrap">
     <div class="setup-logo">
@@ -263,18 +264,18 @@
         </svg>
         <span class="logo-text">musicala</span>
       </div>
-      <p class="logo-slogan">vida, alma y música</p>
+      <p class="logo-slogan">vida, alma y musica</p>
     </div>
 
-    <h1 class="setup-title">Jugar en línea 🌐</h1>
-    <p class="setup-subtitle">Conéctate con amigos desde cualquier dispositivo</p>
+    <h1 class="setup-title">Jugar en linea </h1>
+    <p class="setup-subtitle">Conectate con amigos desde cualquier dispositivo</p>
 
     <!-- Auth area -->
     <div id="online-auth-area" class="online-auth-area">
-      <div class="online-loading">Cargando…</div>
+      <div class="online-loading">Cargando</div>
     </div>
 
-    <!-- Lobby actions (crear / unirse) — aparece cuando hay sesión -->
+    <!-- Lobby actions (crear / unirse) - aparece cuando hay sesin -->
     <div id="online-lobby-actions"></div>
 
     <!-- Spinner -->
@@ -282,13 +283,13 @@
       <div class="spinner-ring"></div>
     </div>
 
-    <button class="btn-link-small" id="btn-online-back" style="margin-top:16px">← Volver al inicio</button>
+    <button class="btn-link-small" id="btn-online-back" style="margin-top:16px"> Volver al inicio</button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
+<!-- 
      LOBBY SCREEN (esperando jugadores)
-══════════════════════════════════════════════ -->
+ -->
 <div id="screen-lobby" class="screen">
   <div class="setup-wrap">
     <div class="setup-logo">
@@ -299,17 +300,17 @@
     <h1 class="setup-title">Sala de espera</h1>
 
     <div class="lobby-code-box">
-      <span class="lobby-code-label">Código de sala</span>
+      <span class="lobby-code-label">Codigo de sala</span>
       <span class="lobby-code-display" id="lobby-code-display">----</span>
-      <button class="btn-link-small" id="btn-copy-code" title="Copiar código">📋 Copiar</button>
+      <button class="btn-link-small" id="btn-copy-code" title="Copiar cdigo"> Copiar</button>
     </div>
 
     <div class="setup-card">
       <h2 class="section-label">Jugadores conectados</h2>
       <div id="lobby-players-list" class="lobby-players-list"></div>
-      <p class="rules-hint" style="margin-top:8px">Comparte el código con tus amigos para que se unan.</p>
+      <p class="rules-hint" style="margin-top:8px">Comparte el cdigo con tus amigos para que se unan.</p>
       <button class="btn-primary" id="btn-lobby-start" style="display:none;margin-top:12px">
-        ¡Empezar partida!
+        Empezar partida!
       </button>
     </div>
 
@@ -319,9 +320,9 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
+<!-- 
      SETUP SCREEN
-══════════════════════════════════════════════ -->
+ -->
 <div id="screen-setup" class="screen">
   <div class="setup-wrap">
     <div class="setup-logo">
@@ -337,11 +338,11 @@
         </svg>
         <span class="logo-text">musicala</span>
       </div>
-      <p class="logo-slogan">vida, alma y música</p>
+      <p class="logo-slogan">vida, alma y musica</p>
     </div>
 
     <h1 class="setup-title">Configurar partida</h1>
-    <p class="setup-subtitle">¿Cuántos músicos van a jugar?</p>
+    <p class="setup-subtitle">Cuntos musicos van a jugar?</p>
 
     <div class="setup-card">
       <h2 class="section-label">Jugadores</h2>
@@ -350,33 +351,33 @@
         <button class="btn-add" id="btn-add-player">+ Agregar jugador</button>
       </div>
       <div class="setup-info">
-        <span class="info-badge">2–8 músicos</span>
+        <span class="info-badge">2-8 musicos</span>
         <span class="info-badge">7 cartas iniciales</span>
         <span class="info-badge">86 cartas totales</span>
       </div>
-      <button class="btn-primary" id="btn-start">¡Comenzar partida!</button>
+      <button class="btn-primary" id="btn-start">Comenzar partida!</button>
     </div>
 
     <div class="rules-preview">
       <h3>Objetivo del juego</h3>
-      <p>Sé el primero en quedarte sin cartas siguiendo la secuencia musical:</p>
+      <p>S el primero en quedarte sin cartas siguiendo la secuencia musical:</p>
       <div class="sequence-preview">
-        <span class="note-pill do">DO</span><span class="arrow">›</span>
-        <span class="note-pill re">RE</span><span class="arrow">›</span>
-        <span class="note-pill mi">MI</span><span class="arrow">›</span>
-        <span class="note-pill fa">FA</span><span class="arrow">›</span>
-        <span class="note-pill sol">SOL</span><span class="arrow">›</span>
-        <span class="note-pill la">LA</span><span class="arrow">›</span>
+        <span class="note-pill do">DO</span><span class="arrow">></span>
+        <span class="note-pill re">RE</span><span class="arrow">></span>
+        <span class="note-pill mi">MI</span><span class="arrow">></span>
+        <span class="note-pill fa">FA</span><span class="arrow">></span>
+        <span class="note-pill sol">SOL</span><span class="arrow">></span>
+        <span class="note-pill la">LA</span><span class="arrow">></span>
         <span class="note-pill si">SI</span>
       </div>
-      <p class="rules-hint">Puedes jugar la nota siguiente, la anterior, o la misma nota en juego. ¡O una escala de 3+ notas de un golpe!</p>
+      <p class="rules-hint">Puedes jugar la nota siguiente, la anterior, o la misma nota en juego. O una escala de 3+ notas de un golpe!</p>
     </div>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
+<!-- 
      GAME SCREEN
-══════════════════════════════════════════════ -->
+ -->
 <div id="screen-game" class="screen">
 
   <header class="game-header">
@@ -396,11 +397,11 @@
     </div>
     <div class="header-status">
       <span class="status-chip" id="chip-turn">Tu turno</span>
-      <span class="status-chip" id="chip-direction">⟳ Horario</span>
+      <span class="status-chip" id="chip-direction"> Horario</span>
       <span class="status-chip" id="chip-deck">Mazo: 0</span>
-      <span class="status-chip online-badge" id="chip-online" style="display:none">🌐 Online</span>
+      <span class="status-chip online-badge" id="chip-online" style="display:none"> Online</span>
     </div>
-    <button class="btn-icon" id="btn-menu" title="Menú">☰</button>
+    <button class="btn-icon" id="btn-menu" title="Menu"></button>
   </header>
 
   <div class="game-body">
@@ -439,8 +440,8 @@
         </div>
         <div class="sequence-dots" id="sequence-dots"></div>
         <div class="forced-dir-badge" id="forced-dir-badge"></div>
-        <!-- Estos dos elementos los crea initGameEvents(), pero los declaramos aquí
-             para que estén disponibles si se quieren estilizar desde style.css -->
+        <!-- Estos dos elementos los crea initGameEvents(), pero los declaramos aqu
+             para que estn disponibles si se quieren estilizar desde style.css -->
         <div id="turn-banner"></div>
         <div id="special-effect-label"></div>
       </div>
@@ -452,28 +453,32 @@
       </div>
     </div>
 
-    <!-- History strip — note chips + last log entry -->
+    <!-- History strip - note chips + last log entry -->
     <div class="history-strip">
       <div class="history-entries" id="history-entries"></div>
-      <button class="history-toggle" id="btn-history">Historial ▾</button>
+      <button class="history-toggle" id="btn-history">Historial </button>
     </div>
 
     <!-- Player hand -->
     <div class="player-hand-area">
       <div class="hand-header">
-        <span class="hand-label" id="hand-label">Tu mano</span>
-        <span class="hand-count" id="hand-count">7 cartas</span>
-        <button class="btn-musicala" id="btn-musicala" style="display:none">¡MUSICALA!</button>
+        <div class="hand-header-main">
+          <span class="hand-label" id="hand-label">Tu mano</span>
+          <span class="hand-count" id="hand-count">7 cartas</span>
+        </div>
+        <div class="hand-header-actions">
+          <button class="btn-scale" id="btn-play-scale" style="display:none">Jugar escala</button>
+          <button class="btn-musicala" id="btn-musicala" style="display:none">MUSICALA!</button>
+        </div>
       </div>
       <div class="hand-cards" id="hand-cards"></div>
-      <div class="hand-hint" id="hand-hint">Toca una carta para ver tus opciones</div>
+      <div class="hand-hint" id="hand-hint">Selecciona notas y toca Jugar escala para lanzarla.</div>
     </div>
   </div>
 
   <!-- Action bar -->
   <div class="action-bar">
     <button class="btn-secondary" id="btn-draw">Robar del mazo</button>
-    <button class="btn-scale" id="btn-play-scale" style="display:none">🎵 Escala</button>
     <button class="btn-secondary" id="btn-new-game">Nueva partida</button>
   </div>
 
@@ -481,74 +486,74 @@
   <div class="help-float">
     <div class="help-panel" id="help-panel">
       <div class="help-header">
-        <span class="help-title-text">🎵 Carta de Apoyo</span>
-        <button class="help-close" onclick="toggleHelp()">✕</button>
+        <span class="help-title-text"> Carta de Apoyo</span>
+        <button class="help-close" onclick="toggleHelp()"></button>
       </div>
       <div class="help-body">
         <div class="help-section">
           <div class="help-section-title">Orden Ascendente</div>
           <div class="help-scale">
-            <div class="help-note" style="background:#E53935">DO</div><span class="help-arr">→</span>
-            <div class="help-note" style="background:#E57C00">RE</div><span class="help-arr">→</span>
-            <div class="help-note" style="background:#C6A800">MI</div><span class="help-arr">→</span>
-            <div class="help-note" style="background:#2E7D32">FA</div><span class="help-arr">→</span>
-            <div class="help-note" style="background:#1565C0">SOL</div><span class="help-arr">→</span>
-            <div class="help-note" style="background:#6A1B9A">LA</div><span class="help-arr">→</span>
+            <div class="help-note" style="background:#E53935">DO</div><span class="help-arr"></span>
+            <div class="help-note" style="background:#E57C00">RE</div><span class="help-arr"></span>
+            <div class="help-note" style="background:#C6A800">MI</div><span class="help-arr"></span>
+            <div class="help-note" style="background:#2E7D32">FA</div><span class="help-arr"></span>
+            <div class="help-note" style="background:#1565C0">SOL</div><span class="help-arr"></span>
+            <div class="help-note" style="background:#6A1B9A">LA</div><span class="help-arr"></span>
             <div class="help-note" style="background:#AD1457">SI</div>
           </div>
         </div>
         <div class="help-section">
           <div class="help-section-title">Orden Descendente</div>
           <div class="help-scale">
-            <div class="help-note" style="background:#AD1457">SI</div><span class="help-arr">→</span>
-            <div class="help-note" style="background:#6A1B9A">LA</div><span class="help-arr">→</span>
-            <div class="help-note" style="background:#1565C0">SOL</div><span class="help-arr">→</span>
-            <div class="help-note" style="background:#2E7D32">FA</div><span class="help-arr">→</span>
-            <div class="help-note" style="background:#C6A800">MI</div><span class="help-arr">→</span>
-            <div class="help-note" style="background:#E57C00">RE</div><span class="help-arr">→</span>
+            <div class="help-note" style="background:#AD1457">SI</div><span class="help-arr"></span>
+            <div class="help-note" style="background:#6A1B9A">LA</div><span class="help-arr"></span>
+            <div class="help-note" style="background:#1565C0">SOL</div><span class="help-arr"></span>
+            <div class="help-note" style="background:#2E7D32">FA</div><span class="help-arr"></span>
+            <div class="help-note" style="background:#C6A800">MI</div><span class="help-arr"></span>
+            <div class="help-note" style="background:#E57C00">RE</div><span class="help-arr"></span>
             <div class="help-note" style="background:#E53935">DO</div>
           </div>
         </div>
         <div class="help-tip" id="help-tip">
-          💡 Nota actual: <strong id="help-tip-note">—</strong>.
-          Puedes jugar <strong id="help-tip-up">—</strong> (↑) o <strong id="help-tip-down">—</strong> (↓).
+           Nota actual: <strong id="help-tip-note">-</strong>.
+          Puedes jugar <strong id="help-tip-up">-</strong> () o <strong id="help-tip-down">-</strong> ().
         </div>
         <div class="help-section" style="margin-top:12px;">
           <div class="help-section-title">Tipos de carta</div>
           <div class="help-types">
             <div class="type-row"><span class="type-badge-help t-note">NOTA</span> Juega la nota en la escala</div>
-            <div class="type-row"><span class="type-badge-help t-alt">ALTERACIÓN</span> Sostenido, Bemol, Becuadro</div>
+            <div class="type-row"><span class="type-badge-help t-alt">ALTERACIN</span> Sostenido, Bemol, Becuadro</div>
             <div class="type-row"><span class="type-badge-help t-special">ESPECIAL</span> Efectos que alteran el juego</div>
           </div>
         </div>
       </div>
     </div>
-    <button class="help-btn" onclick="toggleHelp()" title="Carta de Apoyo">🎵</button>
+    <button class="help-btn" onclick="toggleHelp()" title="Carta de Apoyo"></button>
   </div>
 
 </div><!-- /screen-game -->
 
-<!-- ══════════════════════════════════════════════
+<!-- 
      PASS-SCREEN OVERLAY (Local Multiplayer)
-══════════════════════════════════════════════ -->
+ -->
 <div class="pass-screen-overlay" id="pass-screen-overlay" style="display:none">
   <div class="pass-screen-content">
-    <div class="pass-screen-icon">🎵</div>
-    <div class="pass-screen-title">¡Pasa el dispositivo!</div>
+    <div class="pass-screen-icon"></div>
+    <div class="pass-screen-title">Pasa el dispositivo!</div>
     <div class="pass-screen-sub">Es el turno de:</div>
     <div class="pass-screen-name" id="pass-screen-name">Jugador</div>
     <div class="pass-screen-badge">
-      <strong>Cuando estés listo, presiona el botón</strong>
+      <strong>Cuando ests listo, presiona el botn</strong>
     </div>
     <button class="btn-primary" id="btn-pass-ready" style="max-width:260px">
-      ¡Estoy listo! →
+      Estoy listo! 
     </button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
+<!-- 
      WINNER SCREEN
-══════════════════════════════════════════════ -->
+ -->
 <div id="screen-winner" class="screen">
   <div class="winner-wrap">
     <div class="winner-confetti" id="confetti"></div>
@@ -566,7 +571,7 @@
         <span class="logo-text">musicala</span>
       </div>
     </div>
-    <h1 class="winner-title" id="winner-title">¡Ganaste!</h1>
+    <h1 class="winner-title" id="winner-title">Ganaste!</h1>
     <p class="winner-sub" id="winner-sub"></p>
     <div class="winner-stats" id="winner-stats"></div>
     <button class="btn-primary" id="btn-play-again">Jugar de nuevo</button>
@@ -577,7 +582,7 @@
 <!-- CARD ZOOM OVERLAY -->
 <div class="card-zoom-overlay" id="card-zoom-overlay" onclick="closeCardZoom()">
   <div class="card-zoom-inner" onclick="event.stopPropagation()">
-    <button class="card-zoom-close" onclick="closeCardZoom()">✕</button>
+    <button class="card-zoom-close" onclick="closeCardZoom()"></button>
     <div class="card-zoom-img-wrap">
       <img class="card-zoom-img" id="card-zoom-img" src="" alt="">
       <div class="card-zoom-icon" id="card-zoom-icon" style="display:none"></div>
@@ -590,21 +595,21 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
+<!-- 
      CARD ACTION MENU
      Aparece al hacer clic en una carta de la mano.
-     Sheet modal desde abajo, optimizado para móvil.
-══════════════════════════════════════════════ -->
+     Sheet modal desde abajo, optimizado para mvil.
+ -->
 <div class="card-action-overlay" id="card-action-overlay">
   <div class="card-action-menu" id="card-action-menu">
 
     <!-- Handle visual (drag indicator) -->
     <div class="cam-handle"></div>
 
-    <!-- Header: nombre de la carta + botón cerrar -->
+    <!-- Header: nombre de la carta + botn cerrar -->
     <div class="cam-header">
       <span class="cam-card-name" id="cam-card-name">Carta</span>
-      <button class="cam-close" id="cam-close" aria-label="Cerrar menú">✕</button>
+      <button class="cam-close" id="cam-close" aria-label="Cerrar men"></button>
     </div>
 
     <!-- Preview de la carta -->
@@ -613,19 +618,19 @@
       <div class="cam-preview-icon" id="cam-preview-icon" style="display:none"></div>
     </div>
 
-    <!-- Botones de acción -->
+    <!-- Botones de accin -->
     <div class="cam-actions">
 
       <button class="cam-btn cam-btn-view" id="cam-btn-view">
-        <span class="cam-btn-icon">👁</span>
+        <span class="cam-btn-icon"></span>
         <div class="cam-btn-text">
           <span class="cam-btn-label">Ver carta</span>
-          <span class="cam-btn-sub">Ver imagen y descripción completa</span>
+          <span class="cam-btn-sub">Ver imagen y descripcin completa</span>
         </div>
       </button>
 
       <button class="cam-btn cam-btn-play" id="cam-btn-play">
-        <span class="cam-btn-icon">🎴</span>
+        <span class="cam-btn-icon"></span>
         <div class="cam-btn-text">
           <span class="cam-btn-label">Jugar carta</span>
           <span class="cam-btn-sub" id="cam-btn-play-sub">Poner esta carta en juego</span>
@@ -634,10 +639,10 @@
 
     </div>
 
-    <!-- Hint cuando la carta no es válida -->
+    <!-- Hint cuando la carta no es valida -->
     <div class="cam-invalid-hint" id="cam-invalid-hint" style="display:none">
-      <span class="cam-hint-icon">⚠️</span>
-      <span id="cam-invalid-text">Esta carta no es válida en este turno</span>
+      <span class="cam-hint-icon"></span>
+      <span id="cam-invalid-text">Esta carta no es valida en este turno</span>
     </div>
 
   </div>
@@ -651,19 +656,19 @@
   <div class="modal-box" id="modal-box"></div>
 </div>
 
-<!-- ── Scripts externos ─────────────────────────────────────────────── -->
+<!--  Scripts externos  -->
 <script src="js/cards.js"></script>
 <script src="js/game.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/firebase.js"></script>
 <script src="js/online.js"></script>
 
-<!-- ══════════════════════════════════════════════
-     CARD ACTION MENU — CSS + JS inline
+<!-- 
+     CARD ACTION MENU - CSS + JS inline
      Auto-contenido para no tocar otros archivos.
-══════════════════════════════════════════════ -->
+ -->
 <style>
-/* ── Card Action Menu overlay ─────────────────── */
+/*  Card Action Menu overlay  */
 .card-action-overlay {
   position: fixed;
   inset: 0;
@@ -686,7 +691,7 @@
   to   { opacity: 1; }
 }
 
-/* ── Sheet panel ──────────────────────────────── */
+/*  Sheet panel  */
 .card-action-menu {
   width: min(100vw, 480px);
   background: linear-gradient(170deg, #14163e 0%, #0b0d26 100%);
@@ -703,7 +708,7 @@
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* ── Drag handle ──────────────────────────────── */
+/*  Drag handle  */
 .cam-handle {
   width: 40px;
   height: 4px;
@@ -712,7 +717,7 @@
   margin: 12px auto 0;
 }
 
-/* ── Header ───────────────────────────────────── */
+/*  Header  */
 .cam-header {
   display: flex;
   align-items: center;
@@ -750,7 +755,7 @@
   color: #fff;
 }
 
-/* ── Card preview ─────────────────────────────── */
+/*  Card preview  */
 .cam-preview {
   display: flex;
   justify-content: center;
@@ -780,7 +785,7 @@
   color: #fff;
 }
 
-/* ── Buttons ──────────────────────────────────── */
+/*  Buttons  */
 .cam-actions {
   display: flex;
   flex-direction: column;
@@ -863,7 +868,7 @@
   transform: none !important;
 }
 
-/* ── Invalid hint ─────────────────────────────── */
+/*  Invalid hint  */
 .cam-invalid-hint {
   display: flex;
   align-items: center;
@@ -886,11 +891,11 @@
 (function () {
   'use strict';
 
-  // Variables de estado del menú
+  // Variables de estado del men
   let _camCard = null;
   let _camIdx  = null;
 
-  // ── Abrir menú ──────────────────────────────────────────────────────────
+  //  Abrir men 
 
   window.openCardActionMenu = function (card, idx, mask) {
     _camCard = card;
@@ -924,7 +929,7 @@
       camIcon.textContent = card.icon || label;
     }
 
-    // Estado del botón "Jugar carta"
+    // Estado del botn "Jugar carta"
     const btnPlay     = document.getElementById('cam-btn-play');
     const hintEl      = document.getElementById('cam-invalid-hint');
     const hintText    = document.getElementById('cam-invalid-text');
@@ -938,7 +943,7 @@
     } else if (!valid) {
       btnPlay.disabled   = true;
       hintEl.style.display = 'flex';
-      hintText.textContent = 'Esta carta no es válida en este turno.';
+      hintText.textContent = 'Esta carta no es valida en este turno.';
       playSub.textContent  = 'No se puede jugar ahora';
     } else {
       btnPlay.disabled   = false;
@@ -949,7 +954,7 @@
     document.getElementById('card-action-overlay').classList.add('open');
   };
 
-  // ── Cerrar menú ─────────────────────────────────────────────────────────
+  //  Cerrar men 
 
   window.closeCardActionMenu = function () {
     document.getElementById('card-action-overlay').classList.remove('open');
@@ -957,13 +962,13 @@
     _camIdx  = null;
   };
 
-  // ── Init (eventos, se llama una vez al cargar el DOM) ───────────────────
+  //  Init (eventos, se llama una vez al cargar el DOM) 
 
   window.initCardActionMenu = function () {
     const overlay = document.getElementById('card-action-overlay');
     const menu    = document.getElementById('card-action-menu');
 
-    // Click fuera del panel → cerrar
+    // Click fuera del panel  cerrar
     overlay.addEventListener('click', (e) => {
       if (!menu.contains(e.target)) closeCardActionMenu();
     });
@@ -971,14 +976,14 @@
     // X cerrar
     document.getElementById('cam-close').addEventListener('click', closeCardActionMenu);
 
-    // Botón "Ver carta"
+    // Botn "Ver carta"
     document.getElementById('cam-btn-view').addEventListener('click', () => {
       const card = _camCard;
       closeCardActionMenu();
       if (card && typeof openCardZoom === 'function') openCardZoom(card);
     });
 
-    // Botón "Jugar carta"
+    // Botn "Jugar carta"
     document.getElementById('cam-btn-play').addEventListener('click', () => {
       const idx = _camIdx;
       closeCardActionMenu();
@@ -996,23 +1001,23 @@
 })();
 </script>
 
-<!-- ══════════════════════════════════════════════
-     GAME EVENTS — JS (equivalente a js/game-events.js)
-     Integración no destructiva: parchea addLog,
+<!-- 
+     GAME EVENTS - JS (equivalente a js/game-events.js)
+     Integracin no destructiva: parchea addLog,
      renderBoard y advanceTurn sin romper nada.
-══════════════════════════════════════════════ -->
+ -->
 <script id="game-events-js">
 (function () {
   'use strict';
 
-  // ── Refs a elementos DOM ──────────────────────────────────────────────────
-  // Los elementos #turn-banner y #special-effect-label ya están en el HTML.
+  //  Refs a elementos DOM 
+  // Los elementos #turn-banner y #special-effect-label ya estn en el HTML.
   // #event-feed se crea en initGameEvents().
   let feedEl         = null;
   let bannerEl       = null;
   let specialLabelEl = null;
 
-  // ── Tabla de clasificación de mensajes ────────────────────────────────────
+  //  Tabla de clasificacin de mensajes 
   const MSG_RULES = [
     [/musicala/i,                                             'musicala'],
     [/roba\s*2|\+2\s*carta/i,                                'draw'    ],
@@ -1021,7 +1026,7 @@
     [/intercambi|swap/i,                                     'special' ],
     [/especial|improvisac|desafinac|silencio|partitura|ensayo|nota\s+paso|fantasma|sostenido|bemol|becuadro/i, 'special'],
     [/roba\b/i,                                              'draw'    ],
-    [/jug[oó]\b/i,                                           'play'    ],
+    [/jug[o]\b/i,                                           'play'    ],
     [/turno\s+de\b/i,                                        'turn'    ],
   ];
 
@@ -1032,14 +1037,14 @@
     return 'play';
   }
 
-  // ── Toast stack ───────────────────────────────────────────────────────────
+  //  Toast stack 
   const MAX_TOASTS = 3;
 
   window.showGameEvent = function (msg, type) {
     if (!feedEl) return;
     type = type || classify(msg);
 
-    // Eliminar el más antiguo si ya hay MAX_TOASTS
+    // Eliminar el mas antiguo si ya hay MAX_TOASTS
     while (feedEl.children.length >= MAX_TOASTS) {
       feedEl.removeChild(feedEl.firstChild);
     }
@@ -1057,19 +1062,19 @@
     }, DISMISS_MS);
   };
 
-  // ── Turn banner ───────────────────────────────────────────────────────────
+  //  Turn banner 
   window.showTurnBanner = function (name) {
     if (!bannerEl) return;
-    bannerEl.textContent = '▶ Turno de ' + name;
+    bannerEl.textContent = ' Turno de ' + name;
     bannerEl.classList.remove('show');
-    void bannerEl.offsetWidth; // force reflow para reiniciar animación
+    void bannerEl.offsetWidth; // force reflow para reiniciar animacin
     bannerEl.classList.add('ge-show');
     bannerEl.addEventListener('animationend', function () {
       bannerEl.classList.remove('ge-show');
     }, { once: true });
   };
 
-  // ── Pop de la carta central ───────────────────────────────────────────────
+  //  Pop de la carta central 
   window.animateActiveCard = function () {
     const card = document.getElementById('active-note-card');
     if (!card) return;
@@ -1081,7 +1086,7 @@
     }, { once: true });
   };
 
-  // ── Etiqueta de efecto especial ───────────────────────────────────────────
+  //  Etiqueta de efecto especial 
   window.showSpecialEffect = function (text, type) {
     if (!specialLabelEl) return;
     specialLabelEl.textContent = text;
@@ -1093,7 +1098,7 @@
     }, { once: true });
   };
 
-  // ── Flash del chip de dirección ───────────────────────────────────────────
+  //  Flash del chip de direccin 
   window.flashDirectionChip = function () {
     const chip = document.getElementById('chip-direction');
     if (!chip) return;
@@ -1105,27 +1110,27 @@
     }, { once: true });
   };
 
-  // ── Despachar evento desde mensaje de log ─────────────────────────────────
+  //  Despachar evento desde mensaje de log 
   function _dispatchGameEvent(msg) {
     var type = classify(msg);
     showGameEvent(msg, type);
 
     if (type === 'reverse') {
       flashDirectionChip();
-      showSpecialEffect('🔄 Cambio de dirección', 'reverse');
+      showSpecialEffect(' Cambio de direccin', 'reverse');
     } else if (type === 'skip') {
-      showSpecialEffect('⏭ Turno saltado', 'skip');
+      showSpecialEffect(' Turno saltado', 'skip');
     } else if (type === 'draw') {
-      showSpecialEffect('📥 +2 cartas', 'draw');
+      showSpecialEffect(' +2 cartas', 'draw');
     } else if (type === 'musicala') {
-      showSpecialEffect('🎵 ¡MUSICALA!', 'swap');
+      showSpecialEffect(' MUSICALA!', 'swap');
     }
   }
 
-  // ── Nota previa (para detectar cambio en renderBoard) ────────────────────
+  //  Nota previa (para detectar cambio en renderBoard) 
   var _prevNote = null;
 
-  // ── initGameEvents — punto de entrada público ─────────────────────────────
+  //  initGameEvents - punto de entrada pblico 
   window.initGameEvents = function () {
     if (window.initGameEvents._patched) return;
     window.initGameEvents._patched = true;
@@ -1144,7 +1149,7 @@
     // 3. Etiqueta de efecto especial (ya declarada en el HTML)
     specialLabelEl = document.getElementById('special-effect-label');
 
-    // 4. Parchear addLog ── añade toast sin tocar la lógica original
+    // 4. Parchear addLog  aade toast sin tocar la lgica original
     if (typeof window.addLog === 'function' && !window.addLog._gePatch) {
       var _origLog = window.addLog;
       window.addLog = function (msg) {
@@ -1154,7 +1159,7 @@
       window.addLog._gePatch = true;
     }
 
-    // 5. Parchear renderBoard ── detecta cambio de nota → pop
+    // 5. Parchear renderBoard  detecta cambio de nota  pop
     if (typeof window.renderBoard === 'function' && !window.renderBoard._gePatch) {
       var _origRB = window.renderBoard;
       window.renderBoard = function () {
@@ -1169,7 +1174,7 @@
       window.renderBoard._gePatch = true;
     }
 
-    // 6. Parchear advanceTurn ── muestra banner del nuevo jugador
+    // 6. Parchear advanceTurn  muestra banner del nuevo jugador
     if (typeof window.advanceTurn === 'function' && !window.advanceTurn._gePatch) {
       var _origAT = window.advanceTurn;
       window.advanceTurn = function () {
@@ -1186,25 +1191,25 @@
 })();
 </script>
 
-<!-- ── main.js cargado DESPUÉS de game-events.js ───────────────────── -->
+<!--  main.js cargado DESPUS de game-events.js  -->
 <script src="js/main.js"></script>
 
-<!-- ══════════════════════════════════════════════
-     PATCH startGame → llama initGameEvents()
-     Se ejecuta después de que main.js define
+<!-- 
+     PATCH startGame  llama initGameEvents()
+     Se ejecuta despus de que main.js define
      startGame(), de forma no destructiva.
-══════════════════════════════════════════════ -->
+ -->
 <script>
 (function () {
   'use strict';
 
-  // Esperamos a que el DOM esté listo y main.js haya definido startGame
+  // Esperamos a que el DOM est listo y main.js haya definido startGame
   document.addEventListener('DOMContentLoaded', function () {
     var _origStart = window.startGame;
     if (typeof _origStart !== 'function') return; // seguridad
 
     window.startGame = function () {
-      // initGameEvents ANTES de initGame para que los parches estén listos
+      // initGameEvents ANTES de initGame para que los parches estn listos
       // cuando renderGame() dispare el primer renderBoard()
       if (typeof window.initGameEvents === 'function') {
         window.initGameEvents();
@@ -1218,3 +1223,6 @@
 
 </body>
 </html>
+
+
+

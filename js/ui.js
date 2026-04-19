@@ -56,6 +56,21 @@ function showPlayerSelectModal(title, desc, excludeIdx, callback) {
   window._playerSelectCb = (targetIdx) => { closeModal(); callback(targetIdx); };
 }
 
+function showNotePasoChoiceModal(currentNote, options, callback) {
+  const btns = options.map(note =>
+    `<button class="player-select-btn" onclick="window._notePasoSelectCb('${note}')">${escHtml(note)}</button>`
+  ).join('');
+  const txt = options.length === 2
+    ? `¿Qué nota quieres ahora? ${options[0]} o ${options[1]}.`
+    : 'Elige la nota adyacente que quieres jugar.';
+  showModal(`
+    <p class="modal-title">Nota de Paso</p>
+    <p class="modal-body">Nota actual: <strong>${escHtml(currentNote)}</strong>. ${escHtml(txt)}</p>
+    <div class="player-select-list">${btns}</div>
+  `);
+  window._notePasoSelectCb = (chosenNote) => { closeModal(); callback(chosenNote); };
+}
+
 // ── Pass-screen (local multiplayer) ──────────────────────────────────────────
 
 let _passScreenCallback = null;
@@ -239,7 +254,7 @@ function renderHistory() {
 
 function renderHand() {
   const isOnline  = G._onlineMode;
-  const playerIdx = isOnline ? ON.myIndex : (isHumanTurn() ? humanIndex() : G.currentPlayer);
+  const playerIdx = isOnline ? ON.myIndex : humanIndex();
   const player    = G.players[playerIdx];
   const container = document.getElementById('hand-cards');
   const handCount = document.getElementById('hand-count');
@@ -454,6 +469,22 @@ function handlePostPlay(result) {
     const { title, desc } = labels[result.needsTarget] || { title: 'Elegir jugador', desc: '' };
     showPlayerSelectModal(title, desc, result.playerIdx, (targetIdx) => {
       resolveTarget(result.needsTarget, result.playerIdx, targetIdx);
+      renderGame();
+      if (G.winner !== null) setTimeout(() => showWinnerScreen(), 600);
+      else scheduleNextTurn();
+    });
+    renderGame(); return;
+  }
+
+  if (result.needsNotePasoChoice) {
+    const options = result.noteOptions || [];
+    showNotePasoChoiceModal(G.currentNote, options, (chosenNote) => {
+      const pick = resolveNotePasoChoice(result.playerIdx, chosenNote);
+      if (!pick.ok) {
+        showToast(pick.error || 'No se pudo aplicar Nota de Paso.');
+        renderGame();
+        return;
+      }
       renderGame();
       if (G.winner !== null) setTimeout(() => showWinnerScreen(), 600);
       else scheduleNextTurn();

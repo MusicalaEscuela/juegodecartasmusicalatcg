@@ -296,8 +296,17 @@ function applySpecial(card, playerIdx) {
       G.phase = 'improvisacion';
       addLog('¡Improvisación! Elige una nota de tu mano.');
       return { ok: true, phase: 'improvisacion' };
-    case 'notaPaso':
-      addLog('Nota de Paso jugada.'); advanceTurn(); break;
+    case 'notaPaso': {
+      const ci = noteIndex(G.currentNote);
+      const up = ci < NOTES.length - 1 ? NOTES[ci + 1] : null;
+      const down = ci > 0 ? NOTES[ci - 1] : null;
+      const noteOptions = [up, down].filter(Boolean);
+      if (noteOptions.length === 0) {
+        return { ok: false, error: 'No hay notas adyacentes disponibles para Nota de Paso.' };
+      }
+      addLog(`${player.name} jugó Nota de Paso.`);
+      return { ok: true, needsNotePasoChoice: true, playerIdx, noteOptions };
+    }
     case 'desafinacion':
       addLog('¡Desafinación!'); advanceTurn(); break;
     default: advanceTurn();
@@ -329,6 +338,27 @@ function resolveTarget(effect, playerIdx, targetIdx) {
   checkMusicala(playerIdx);
   if (checkWinner(playerIdx)) return;
   advanceTurn();
+}
+
+function resolveNotePasoChoice(playerIdx, chosenNote) {
+  const ci = noteIndex(G.currentNote);
+  const up = ci < NOTES.length - 1 ? NOTES[ci + 1] : null;
+  const down = ci > 0 ? NOTES[ci - 1] : null;
+  const options = [up, down].filter(Boolean);
+
+  if (!options.includes(chosenNote)) {
+    return { ok: false, error: 'Esa nota no es una opción válida para Nota de Paso.' };
+  }
+
+  G.currentNote = chosenNote;
+  recordNote(chosenNote);
+  G.forcedDir = null;
+  addLog(`${G.players[playerIdx].name} elige ${chosenNote} con Nota de Paso.`);
+
+  checkMusicala(playerIdx);
+  if (checkWinner(playerIdx)) return { ok: true };
+  advanceTurn();
+  return { ok: true };
 }
 
 // ── CPU AI ────────────────────────────────────────────────────────────────────
@@ -371,6 +401,10 @@ function aiTurn(playerIdx) {
       const targets = G.players.map((_, i) => i).filter(i => i !== playerIdx);
       const t = targets[Math.floor(Math.random() * targets.length)];
       resolveTarget(result.needsTarget, playerIdx, t);
+    } else if (result.needsNotePasoChoice) {
+      const options = result.noteOptions || [];
+      const chosen = options[Math.floor(Math.random() * options.length)];
+      if (chosen) resolveNotePasoChoice(playerIdx, chosen);
     }
   } else {
     const card = drawCard(playerIdx);

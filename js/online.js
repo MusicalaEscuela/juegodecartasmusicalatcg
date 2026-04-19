@@ -1,23 +1,23 @@
-/* ===================================================
-   MUSICALA – online.js
-   Modo online: autenticación, lobby y sincronización
+﻿/* ===================================================
+   MUSICALA  online.js
+   Modo online: autenticacin, lobby y sincronizacin
    =================================================== */
 
 'use strict';
 
-// ── Estado online ─────────────────────────────────────────────────────────────
+//  Estado online 
 
 const ON = {
   user:        null,   // { uid, name, photoURL }
   roomCode:    null,
-  myIndex:     -1,     // índice de este jugador en room.players
+  myIndex:     -1,     // ndice de este jugador en room.players
   roomUnsub:   null,   // unsubscribe del listener de la sala
   myHand:      [],     // mano privada de este jugador
   isHost:      false,
-  latestState: null,   // último gameState recibido de Firestore
+  latestState: null,   // ltimo gameState recibido de Firestore
 };
 
-// ── Auth ──────────────────────────────────────────────────────────────────────
+//  Auth 
 
 async function onlineLogin() {
   const { auth, signInWithPopup, GoogleAuthProvider } = window.FB;
@@ -37,7 +37,7 @@ async function onlineLogout() {
   renderOnlineAuth();
 }
 
-// ── Pantalla online: login / lobby ────────────────────────────────────────────
+//  Pantalla online: login / lobby 
 
 function renderOnlineAuth() {
   const el = document.getElementById('online-auth-area');
@@ -45,7 +45,7 @@ function renderOnlineAuth() {
   if (!ON.user) {
     el.innerHTML = `
       <div class="online-login-box">
-        <p class="online-subtitle">Inicia sesión para jugar en línea</p>
+        <p class="online-subtitle">Inicia sesin para jugar en lnea</p>
         <button class="btn-google" id="btn-google-login">
           <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.6 2.3 30.1 0 24 0 14.6 0 6.6 5.5 2.6 13.5l7.8 6C12.3 13.1 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8C43.7 37.5 46.5 31.4 46.5 24.5z"/><path fill="#FBBC05" d="M10.4 28.5A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.1.8-4.5l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.8-6.3z"/><path fill="#34A853" d="M24 48c6.1 0 11.3-2 15-5.4l-7.5-5.8c-2 1.4-4.6 2.2-7.5 2.2-6.3 0-11.6-4.2-13.5-9.9l-7.8 6.2C6.6 42.5 14.6 48 24 48z"/></svg>
           Continuar con Google
@@ -58,7 +58,7 @@ function renderOnlineAuth() {
       <div class="online-user-row">
         ${ON.user.photoURL ? `<img class="online-avatar" src="${ON.user.photoURL}" alt="">` : ''}
         <span class="online-username">${escHtml(ON.user.name)}</span>
-        <button class="btn-link-small" id="btn-online-logout">Cerrar sesión</button>
+        <button class="btn-link-small" id="btn-online-logout">Cerrar sesin</button>
       </div>
     `;
     document.getElementById('btn-online-logout').addEventListener('click', onlineLogout);
@@ -75,7 +75,7 @@ function renderLobbyActions() {
       <span class="lobby-or">o</span>
       <div class="join-row">
         <input class="join-input" id="join-code-input" type="text" maxlength="4"
-               placeholder="Código" autocomplete="off" style="text-transform:uppercase">
+               placeholder="Cdigo" autocomplete="off" style="text-transform:uppercase">
         <button class="btn-secondary" id="btn-join-room">Unirse</button>
       </div>
     </div>
@@ -87,7 +87,7 @@ function renderLobbyActions() {
   });
 }
 
-// ── Crear / Unirse a sala ─────────────────────────────────────────────────────
+//  Crear / Unirse a sala 
 
 async function handleCreateRoom() {
   try {
@@ -107,7 +107,7 @@ async function handleCreateRoom() {
 async function handleJoinRoom() {
   const input = document.getElementById('join-code-input');
   const code  = (input?.value || '').trim().toUpperCase();
-  if (code.length !== 4) { showToast('Ingresa el código de 4 letras.'); return; }
+  if (code.length !== 4) { showToast('Ingresa el cdigo de 4 letras.'); return; }
   try {
     showOnlineSpinner(true);
     await joinRoom(code, ON.user.name);
@@ -122,7 +122,7 @@ async function handleJoinRoom() {
   }
 }
 
-// ── Suscripción en tiempo real a la sala ──────────────────────────────────────
+//  Suscripcin en tiempo real a la sala 
 
 function subscribeToRoom(code) {
   if (ON.roomUnsub) ON.roomUnsub();
@@ -135,7 +135,7 @@ function subscribeToRoom(code) {
     }
     const room = snap.data();
 
-    // Encontrar mi índice
+    // Encontrar mi ndice
     ON.myIndex = room.players.findIndex(p => p.uid === ON.user.uid);
 
     if (room.status === 'waiting') {
@@ -143,16 +143,14 @@ function subscribeToRoom(code) {
     }
 
     if (room.status === 'playing') {
-      // Si acabo de entrar a la partida, cargar mi mano
-      if (!ON.myHand.length || ON.latestState?.turnCount !== room.gameState?.turnCount) {
-        ON.myHand = await readMyHand(code, ON.user.uid);
-      }
+      // Siempre refrescar mano privada desde subdoc para evitar desincronizacin.
+      ON.myHand = await readMyHand(code, ON.user.uid);
       ON.latestState = room.gameState;
       syncOnlineStateToG(room.gameState, room.players);
 
       if (document.getElementById('screen-game').classList.contains('active')) {
         renderGame();
-        // Si es mi turno y gané
+        // Si es mi turno y gan
         if (G.winner !== null) {
           setTimeout(() => showWinnerScreen(), 600);
         }
@@ -163,12 +161,12 @@ function subscribeToRoom(code) {
     }
 
     if (room.status === 'ended') {
-      showToast('La partida terminó.');
+      showToast('La partida termin.');
     }
   });
 }
 
-// ── Lobby screen ──────────────────────────────────────────────────────────────
+//  Lobby screen 
 
 function renderLobbyScreen(room) {
   const el = document.getElementById('lobby-players-list');
@@ -180,7 +178,7 @@ function renderLobbyScreen(room) {
     <div class="lobby-player-row ${p.uid === ON.user.uid ? 'me' : ''}">
       <span class="lobby-player-num">${i + 1}</span>
       <span class="lobby-player-name">${escHtml(p.name)}</span>
-      ${p.uid === room.hostUid ? '<span class="lobby-host-badge">Anfitrión</span>' : ''}
+      ${p.uid === room.hostUid ? '<span class="lobby-host-badge">Anfitrin</span>' : ''}
     </div>
   `).join('');
 
@@ -191,8 +189,8 @@ function renderLobbyScreen(room) {
     btnStart.style.display  = isHost ? 'block' : 'none';
     btnStart.disabled       = !canStart;
     btnStart.textContent    = canStart
-      ? `¡Empezar partida! (${room.players.length} jugadores)`
-      : `Esperando jugadores… (${room.players.length}/2 mín.)`;
+      ? `Empezar partida! (${room.players.length} jugadores)`
+      : `Esperando jugadores (${room.players.length}/2 mn.)`;
   }
 }
 
@@ -201,7 +199,7 @@ async function handleLobbyStart() {
   try {
     showOnlineSpinner(true);
     await startOnlineGame(ON.roomCode);
-    // El listener onSnapshot se encargará de mover a todos a la pantalla de juego
+    // El listener onSnapshot se encargar de mover a todos a la pantalla de juego
   } catch (e) {
     showToast('Error al iniciar: ' + e.message);
   } finally {
@@ -209,12 +207,12 @@ async function handleLobbyStart() {
   }
 }
 
-// ── Sincronizar estado Firestore → G local ────────────────────────────────────
+//  Sincronizar estado Firestore  G local 
 
 function syncOnlineStateToG(gameState, roomPlayers) {
   if (!gameState) return;
 
-  // Reconstituir G mezclando estado público con mi mano privada
+  // Reconstituir G mezclando estado pblico con mi mano privada
   G = {
     ...gameState,
     players: gameState.players.map((p, i) => ({
@@ -222,7 +220,7 @@ function syncOnlineStateToG(gameState, roomPlayers) {
       uid:               p.uid,
       isHuman:           true,    // todos son humanos en online
       musicalaAnnounced: p.musicalaAnnounced,
-      // Solo YO tengo mi mano real; los demás tienen array vacío (su conteo está en handCount)
+      // Solo YO tengo mi mano real; los dems tienen array vaco (su conteo est en handCount)
       hand: p.uid === ON.user.uid ? ON.myHand : Array(p.handCount).fill({ type: '_hidden' }),
     })),
     _onlineMode: true,
@@ -232,8 +230,8 @@ function syncOnlineStateToG(gameState, roomPlayers) {
   };
 }
 
-// ── Overrides de humanPlayCard / humanDraw para modo online ───────────────────
-// En modo online, después de cada jugada escribimos el estado a Firestore
+//  Overrides de humanPlayCard / humanDraw para modo online 
+// En modo online, despus de cada jugada escribimos el estado a Firestore
 
 const _origHumanPlayCard  = typeof humanPlayCard  !== 'undefined' ? humanPlayCard  : null;
 const _origHumanDraw      = typeof humanDraw      !== 'undefined' ? humanDraw      : null;
@@ -243,7 +241,7 @@ function onlineHumanPlayCard(cardIdx) {
   if (!G._onlineMode) return humanPlayCard(cardIdx);
   if (ON.myIndex !== G.currentPlayer) return { ok: false, error: 'No es tu turno.' };
 
-  // Ejecutar lógica local primero
+  // Ejecutar lgica local primero
   const result = humanPlayCard(cardIdx);
   if (result.ok) _pushOnlineState();
   return result;
@@ -267,11 +265,16 @@ function onlineHumanPlayScale(indices) {
 
 async function _pushOnlineState() {
   if (!G._onlineMode) return;
-  // Serializar G → Firestore (sin las manos privadas, solo handCounts)
+  const myHand = [...G.players[ON.myIndex].hand];
+  ON.myHand = myHand;
+
+  // Guardar primero la mano privada y despus el estado pblico.
+  // As, cuando llegue el snapshot del room, la mano ya est actualizada.
+  await writeMyHand(ON.roomCode, ON.user.uid, myHand);
+
+  // Serializar G  Firestore (sin las manos privadas, solo handCounts)
   const publicState = buildPublicState();
   await writeGameState(ON.roomCode, publicState);
-  // Guardar mi mano privada actualizada
-  await writeMyHand(ON.roomCode, ON.user.uid, ON.myHand = G.players[ON.myIndex].hand);
 }
 
 function buildPublicState() {
@@ -298,15 +301,15 @@ function buildPublicState() {
   };
 }
 
-// ── isHumanTurn para modo online ──────────────────────────────────────────────
-// Reemplaza la función original cuando estamos en modo online
+//  isHumanTurn para modo online 
+// Reemplaza la funcin original cuando estamos en modo online
 
 function isMyOnlineTurn() {
   if (!G || !G._onlineMode) return isHumanTurn();
   return G.currentPlayer === ON.myIndex;
 }
 
-// ── Salir del modo online ─────────────────────────────────────────────────────
+//  Salir del modo online 
 
 async function exitOnlineMode() {
   if (ON.roomUnsub) { ON.roomUnsub(); ON.roomUnsub = null; }
@@ -320,9 +323,10 @@ async function exitOnlineMode() {
   showScreen('screen-intro');
 }
 
-// ── Spinner helper ────────────────────────────────────────────────────────────
+//  Spinner helper 
 
 function showOnlineSpinner(show) {
   const el = document.getElementById('online-spinner');
   if (el) el.style.display = show ? 'flex' : 'none';
 }
+

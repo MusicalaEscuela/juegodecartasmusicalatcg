@@ -1,6 +1,6 @@
-/* ===================================================
-   MUSICALA – game.js  v2
-   Lógica central + soporte multijugador local
+﻿/* ===================================================
+   MUSICALA  game.js  v2
+   Lgica central + soporte multijugador local
    =================================================== */
 
 'use strict';
@@ -30,17 +30,17 @@ function initGame(playersConfig) {
     forcedDir: null,
     selectedCards: [],
     log: [],
-    noteHistory: [startCard.note],  // ← sequence chip history
+    noteHistory: [startCard.note],  //  sequence chip history
     winner: null,
     phase: 'play',
     partituraUsed: 0,
     turnCount: 0,
   };
 
-  addLog(`La secuencia comienza en ${startCard.note}. ¡Que empiece el juego!`);
+  addLog(`La secuencia comienza en ${startCard.note}. Que empiece el juego!`);
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+//  Helpers 
 
 function addLog(msg) {
   G.log.unshift({ msg, turn: G.turnCount, ts: Date.now() });
@@ -65,7 +65,7 @@ function reshuffleIfNeeded() {
     const last = G.discard.pop();
     G.deck = shuffle(G.discard);
     G.discard = [last];
-    addLog('El mazo se agotó. Las cartas descartadas se barajaron.');
+    addLog('El mazo se agot. Las cartas descartadas se barajaron.');
   }
 }
 
@@ -78,18 +78,15 @@ function drawCard(playerIdx) {
 }
 
 function checkMusicala(playerIdx) {
-  const p = G.players[playerIdx];
-  if (p.hand.length === 1 && !p.musicalaAnnounced && !p.isHuman) {
-    p.musicalaAnnounced = true;
-    addLog(`¡${p.name} grita MUSICALA!`);
-  }
+  // Regla desactivada en modo virtual
+  return;
 }
 
 function checkWinner(playerIdx) {
   if (G.players[playerIdx].hand.length === 0) {
     G.winner = playerIdx;
     G.phase = 'ended';
-    addLog(`🏆 ${G.players[playerIdx].name} gana la partida.`);
+    addLog(` ${G.players[playerIdx].name} gana la partida.`);
     return true;
   }
   return false;
@@ -107,7 +104,7 @@ function advanceTurn() {
   }
 }
 
-// ── Human plays ───────────────────────────────────────────────────────────────
+//  Human plays 
 
 function humanIndex() {
   // In multi-human: the current human is the one whose turn it is
@@ -143,7 +140,7 @@ function humanPlayCard(cardIdx) {
   }
 
   const mask = getValidMask(player.hand, G.currentNote, G.forcedDir);
-  if (!mask[cardIdx]) return { ok: false, error: 'Esa carta no es válida ahora.' };
+  if (!mask[cardIdx]) return { ok: false, error: 'Esa carta no es vlida ahora.' };
   const card = player.hand.splice(cardIdx, 1)[0];
   return applyCard(card, G.currentPlayer);
 }
@@ -152,7 +149,7 @@ function humanPlayScale(indices) {
   if (G.winner || !isHumanTurn()) return { ok: false, error: 'No es tu turno.' };
   const player = G.players[G.currentPlayer];
   const validation = getScaleValidation(indices, player.hand, G.currentNote, G.forcedDir);
-  if (!validation.valid) return { ok: false, error: 'Las cartas seleccionadas no forman una escala válida.' };
+  if (!validation.valid) return { ok: false, error: 'Las cartas seleccionadas no forman una escala vlida.' };
 
   const sorted = [...indices].sort((a, b) => {
     const ni = noteIndex(player.hand[a].note);
@@ -172,24 +169,24 @@ function humanPlayScale(indices) {
   G.forcedDir    = null;
   G.selectedCards = [];
 
-  addLog(`${player.name} jugó escala ${validation.dir === 'asc' ? '↑' : '↓'}: ${noteNames.join(' › ')}.`);
+  addLog(`${player.name} jug escala ${validation.dir === 'asc' ? '' : ''}: ${noteNames.join('  ')}.`);
   checkMusicala(G.currentPlayer);
-  if (checkWinner(G.currentPlayer)) return { ok: true };
+  if (checkWinner(G.currentPlayer)) return { ok: true, scalePlayOrder: noteNames };
   advanceTurn();
-  return { ok: true };
+  return { ok: true, scalePlayOrder: noteNames };
 }
 
 function humanDraw() {
   if (G.winner || !isHumanTurn()) return { ok: false };
   const mask = getValidMask(G.players[G.currentPlayer].hand, G.currentNote, G.forcedDir);
-  if (mask.some(v => v)) return { ok: false, error: 'Tienes cartas válidas para jugar.' };
+  if (mask.some(v => v)) return { ok: false, error: 'Tienes cartas vlidas para jugar.' };
   const card = drawCard(G.currentPlayer);
-  if (!card) return { ok: false, error: 'El mazo está vacío.' };
+  if (!card) return { ok: false, error: 'El mazo est vaco.' };
   addLog(`${G.players[G.currentPlayer].name} roba una carta.`);
   const newMask  = getValidMask(G.players[G.currentPlayer].hand, G.currentNote, G.forcedDir);
   const drawnIdx = G.players[G.currentPlayer].hand.length - 1;
   if (newMask[drawnIdx]) {
-    addLog('La carta robada es válida. ¡Puedes jugarla!');
+    addLog('La carta robada es vlida. Puedes jugarla!');
   } else {
     advanceTurn();
   }
@@ -197,21 +194,15 @@ function humanDraw() {
 }
 
 function humanAnnounceMusica() {
-  const p = G.players[G.currentPlayer];
-  if (!p.isHuman) return { ok: false };
-  if (p.hand.length !== 1) return { ok: false, error: 'Solo cuando te queda 1 carta.' };
-  if (p.musicalaAnnounced) return { ok: false, error: 'Ya lo anunciaste.' };
-  p.musicalaAnnounced = true;
-  addLog(`¡${p.name} grita MUSICALA!`);
-  return { ok: true };
+  return { ok: false, error: 'La regla MUSICALA est desactivada.' };
 }
 
 function penalizeMusicalaMissed(targetIdx) {
   for (let i = 0; i < 2; i++) drawCard(targetIdx);
-  addLog(`${G.players[targetIdx].name} no gritó MUSICALA a tiempo. ¡Roba 2 cartas!`);
+  addLog(`${G.players[targetIdx].name} no grit MUSICALA a tiempo. Roba 2 cartas!`);
 }
 
-// ── Apply card effect ─────────────────────────────────────────────────────────
+//  Apply card effect 
 
 function applyCard(card, playerIdx) {
   G.discard.push(card);
@@ -221,7 +212,7 @@ function applyCard(card, playerIdx) {
     G.currentNote = card.note;
     recordNote(card.note);
     G.forcedDir = null;
-    addLog(`${player.name} jugó ${card.note}.`);
+    addLog(`${player.name} jug ${card.note}.`);
     checkMusicala(playerIdx);
     if (checkWinner(playerIdx)) return { ok: true };
     advanceTurn();
@@ -237,15 +228,15 @@ function applyAlteration(card, playerIdx) {
   if (card.effect === 'sostenido') {
     if (['MI','SI'].includes(G.currentNote)) return { ok: false, error: 'El sostenido no puede jugarse sobre MI ni SI.' };
     G.forcedDir = 'asc';
-    addLog(`${player.name} jugó Sostenido ♯. El siguiente debe subir.`);
+    addLog(`${player.name} jug Sostenido . El siguiente debe subir.`);
   } else if (card.effect === 'bemol') {
     if (['FA','DO'].includes(G.currentNote)) return { ok: false, error: 'El bemol no puede jugarse sobre FA ni DO.' };
     G.forcedDir = 'desc';
-    addLog(`${player.name} jugó Bemol ♭. El siguiente debe bajar.`);
+    addLog(`${player.name} jug Bemol . El siguiente debe bajar.`);
   } else if (card.effect === 'becuadro') {
     if (G.forcedDir === null) return { ok: false, error: 'El becuadro solo se usa si hay sostenido o bemol activo.' };
     G.forcedDir = null;
-    addLog(`${player.name} jugó Becuadro ♮. Alteración cancelada.`);
+    addLog(`${player.name} jug Becuadro . Alteracin cancelada.`);
   }
   checkMusicala(playerIdx);
   if (checkWinner(playerIdx)) return { ok: true };
@@ -255,13 +246,13 @@ function applyAlteration(card, playerIdx) {
 
 function applySpecial(card, playerIdx) {
   const player = G.players[playerIdx];
-  addLog(`${player.name} jugó ${card.name}.`);
+  addLog(`${player.name} jug ${card.name}.`);
 
   if (card.effect === 'partitura') {
     G.players.forEach((p, i) => {
       if (i !== playerIdx) while (p.hand.length < 7) { if (!drawCard(i)) break; }
     });
-    addLog('¡Partitura! Todos los demás tienen ahora 7 cartas.');
+    addLog('Partitura! Todos los dems tienen ahora 7 cartas.');
     checkMusicala(playerIdx);
     if (checkWinner(playerIdx)) return { ok: true };
     advanceTurn();
@@ -289,26 +280,23 @@ function applySpecial(card, playerIdx) {
       G.players.forEach((p, i) => {
         p.hand = tmp[(i - G.direction + G.players.length) % G.players.length];
       });
-      addLog('¡Rotación de Orquesta! Todas las manos rotaron.');
+      addLog('Rotacin de Orquesta! Todas las manos rotaron.');
       advanceTurn(); break;
     }
     case 'improvisacion':
       G.phase = 'improvisacion';
-      addLog('¡Improvisación! Elige una nota de tu mano.');
+      addLog('Improvisacin! Elige una nota de tu mano.');
       return { ok: true, phase: 'improvisacion' };
     case 'notaPaso': {
       const ci = noteIndex(G.currentNote);
-      const up = ci < NOTES.length - 1 ? NOTES[ci + 1] : null;
-      const down = ci > 0 ? NOTES[ci - 1] : null;
-      const noteOptions = [up, down].filter(Boolean);
-      if (noteOptions.length === 0) {
-        return { ok: false, error: 'No hay notas adyacentes disponibles para Nota de Paso.' };
-      }
-      addLog(`${player.name} jugó Nota de Paso.`);
+      const up = NOTES[(ci + 1) % NOTES.length];
+      const down = NOTES[(ci - 1 + NOTES.length) % NOTES.length];
+      const noteOptions = [up, down];
+      addLog(`${player.name} jug Nota de Paso.`);
       return { ok: true, needsNotePasoChoice: true, playerIdx, noteOptions };
     }
     case 'desafinacion':
-      addLog('¡Desafinación!'); advanceTurn(); break;
+      addLog('Desafinacin!'); advanceTurn(); break;
     default: advanceTurn();
   }
 
@@ -342,12 +330,12 @@ function resolveTarget(effect, playerIdx, targetIdx) {
 
 function resolveNotePasoChoice(playerIdx, chosenNote) {
   const ci = noteIndex(G.currentNote);
-  const up = ci < NOTES.length - 1 ? NOTES[ci + 1] : null;
-  const down = ci > 0 ? NOTES[ci - 1] : null;
-  const options = [up, down].filter(Boolean);
+  const up = NOTES[(ci + 1) % NOTES.length];
+  const down = NOTES[(ci - 1 + NOTES.length) % NOTES.length];
+  const options = [up, down];
 
   if (!options.includes(chosenNote)) {
-    return { ok: false, error: 'Esa nota no es una opción válida para Nota de Paso.' };
+    return { ok: false, error: 'Esa nota no es una opcin vlida para Nota de Paso.' };
   }
 
   G.currentNote = chosenNote;
@@ -361,7 +349,7 @@ function resolveNotePasoChoice(playerIdx, chosenNote) {
   return { ok: true };
 }
 
-// ── CPU AI ────────────────────────────────────────────────────────────────────
+//  CPU AI 
 
 function aiTurn(playerIdx) {
   if (G.winner) return;
@@ -387,7 +375,7 @@ function aiTurn(playerIdx) {
   const mask = getValidMask(player.hand, G.currentNote, G.forcedDir);
   let playIdx = -1;
 
-  // Smart priority: prefer note → alt → special; prefer lower hand count
+  // Smart priority: prefer note  alt  special; prefer lower hand count
   const validIndices = player.hand.map((c, i) => mask[i] ? i : -1).filter(i => i >= 0);
   if (validIndices.length > 0) {
     // pick note card if possible
@@ -423,3 +411,4 @@ function aiTurn(playerIdx) {
   checkMusicala(playerIdx);
   checkWinner(playerIdx);
 }
+

@@ -1,11 +1,11 @@
-/* ===================================================
-   MUSICALA – firebase.js
-   Inicialización Firebase + helpers Firestore
+﻿/* ===================================================
+   MUSICALA  firebase.js
+   Inicializacin Firebase + helpers Firestore
    =================================================== */
 
 'use strict';
 
-// ── Config ────────────────────────────────────────────────────────────────────
+//  Config 
 
 const FIREBASE_CONFIG = {
   apiKey:            "AIzaSyCMP-QsrDh-nrWHFBMASbmOQqoqhsrnPmg",
@@ -16,8 +16,8 @@ const FIREBASE_CONFIG = {
   appId:             "1:795406768027:web:7f4c1628c082517b8ff33e"
 };
 
-// ── Firebase SDK (via CDN ESM) ────────────────────────────────────────────────
-// Cargamos dinámicamente para no bloquear el juego offline/local
+//  Firebase SDK (via CDN ESM) 
+// Cargamos dinmicamente para no bloquear el juego offline/local
 
 let _db   = null;
 let _auth = null;
@@ -42,7 +42,7 @@ async function loadFirebase() {
     _db   = getFirestore(app);
     _auth = getAuth(app);
 
-    // Exponer funciones Firestore/Auth globalmente para el resto del código
+    // Exponer funciones Firestore/Auth globalmente para el resto del cdigo
     window.FB = {
       db: _db, auth: _auth,
       doc, getDoc, setDoc, updateDoc, onSnapshot,
@@ -54,14 +54,14 @@ async function loadFirebase() {
     _fbReadyCallbacks.forEach(cb => cb());
     _fbReadyCallbacks = [];
 
-    console.log('[Firebase] Listo ✓');
+    console.log('[Firebase] Listo ');
   } catch (e) {
     console.error('[Firebase] Error al cargar:', e);
     showToast('Error al conectar con Firebase. Modo online no disponible.');
   }
 }
 
-// ── Sala helpers ──────────────────────────────────────────────────────────────
+//  Sala helpers 
 
 function genRoomCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -101,8 +101,8 @@ async function joinRoom(code, playerName) {
   const snap     = await getDoc(roomRef);
   if (!snap.exists())       throw new Error('Sala no encontrada.');
   const room = snap.data();
-  if (room.status !== 'waiting') throw new Error('La partida ya comenzó.');
-  if (room.players.length >= 8)  throw new Error('La sala está llena (máx. 8).');
+  if (room.status !== 'waiting') throw new Error('La partida ya comenz.');
+  if (room.players.length >= 8)  throw new Error('La sala est llena (mx. 8).');
 
   const alreadyIn = room.players.find(p => p.uid === _auth.currentUser.uid);
   if (!alreadyIn) {
@@ -152,7 +152,7 @@ async function startOnlineGame(code) {
   const playersState = room.players.map((p, i) => ({
     uid:               p.uid,
     name:              p.name,
-    handCount:         7,       // público — cuántas cartas tiene
+    handCount:         7,       // pblico  cuntas cartas tiene
     musicalaAnnounced: false,
   }));
 
@@ -160,12 +160,12 @@ async function startOnlineGame(code) {
     deck,
     discard:       [startCard],
     currentNote:   startCard.note,
-    currentPlayer: 0,           // índice en players[]
+    currentPlayer: 0,           // ndice en players[]
     direction:     1,
     skipNext:      false,
     forcedDir:     null,
     selectedCards: [],
-    log:           [`La secuencia comienza en ${startCard.note}. ¡Que empiece el juego!`],
+    log:           [`La secuencia comienza en ${startCard.note}. Que empiece el juego!`],
     noteHistory:   [startCard.note],
     winner:        null,
     phase:         'play',
@@ -204,3 +204,4 @@ async function readMyHand(code, uid) {
   const snap = await getDoc(doc(db, 'rooms', code, 'hands', uid));
   return snap.exists() ? snap.data().hand : [];
 }
+

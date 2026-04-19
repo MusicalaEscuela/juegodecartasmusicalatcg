@@ -182,19 +182,16 @@ function renderOpponents() {
     if (i === viewerIdx && p.isHuman) return;
     const slot = document.createElement('div');
     slot.className = 'opponent-slot'
-      + (G.currentPlayer === i ? ' active-turn' : '')
-      + (p.musicalaAnnounced && p.hand.length === 1 ? ' musicala-announced' : '');
+      + (G.currentPlayer === i ? ' active-turn' : '');
 
     const miniCards = p.hand.slice(0, 14).map(() =>
       `<div class="opp-mini-card"><img src="assets/backs/back.png" onerror="this.style.display='none'" alt=""></div>`
     ).join('');
-    const musicBadge = (p.musicalaAnnounced && p.hand.length === 1)
-      ? '<span class="musicala-badge">MUSICALA</span>' : '';
     const cpuBadge   = !p.isHuman ? '<span class="cpu-badge">CPU</span>' : '';
     const humanBadge = p.isHuman  ? '<span class="cpu-badge" style="background:rgba(12,65,196,0.4);color:#93c5fd">HUM</span>' : '';
 
     slot.innerHTML = `
-      <div class="opp-name">${escHtml(p.name)}${cpuBadge}${humanBadge}${musicBadge}</div>
+      <div class="opp-name">${escHtml(p.name)}${cpuBadge}${humanBadge}</div>
       <div class="opp-cards-row">${miniCards}</div>
       <div class="opp-count">${p.hand.length} carta${p.hand.length !== 1 ? 's' : ''}</div>
     `;
@@ -269,15 +266,14 @@ function renderHand() {
   const realHand = isOnline ? ON.myHand : player.hand;
   const mask     = isMy ? getValidMask(realHand, G.currentNote, G.forcedDir) : [];
 
-  const needsMusicala = realHand.length === 1 && !player.musicalaAnnounced && isMy;
-  btnMusicala.style.display = needsMusicala ? 'inline-block' : 'none';
+  btnMusicala.style.display = 'none';
 
   if (G.phase === 'improvisacion' && isMy) {
     hint.textContent = 'Selecciona una carta de NOTA para improvisar.';
   } else if (isMy) {
     const hasValid = mask.some(v => v);
     hint.textContent = hasValid
-      ? 'Toca una carta válida para jugarla. Mantén presionada para ampliar.'
+      ? 'Toca para seleccionar. Vuelve a tocar para jugar. Para escala: selecciona 3+ y pulsa Jugar escala.'
       : 'No tienes carta válida. Roba del mazo.';
   } else {
     hint.textContent = `Esperando a ${G.players[G.currentPlayer].name}…`;
@@ -357,36 +353,10 @@ function buildCardElement(card, idx, interactive, mask) {
         // ── Carta válida: jugar directamente, sin pasar por el menú ──
         handleCardClick(idx);
       } else {
-        // ── Carta inválida: abrir el menú para mostrar el motivo ──
-        openCardActionMenu(card, idx, mask);
+        showToast('Esa carta no es válida ahora.');
       }
     });
   }
-
-  // Double-click → zoom directo
-  el.addEventListener('dblclick', (e) => { e.stopPropagation(); openCardZoom(card); });
-
-  // Long-press (500 ms) → abre el CAM.
-  // Así las cartas válidas siguen teniendo acceso a "Ver carta" y "Jugar carta"
-  // aunque el tap corto las juegue directo.
-  let pressTimer = null;
-  let _longFired = false;
-  el.addEventListener('pointerdown', () => {
-    _longFired = false;
-    pressTimer = setTimeout(() => {
-      _longFired = true;
-      if (interactive) openCardActionMenu(card, idx, mask);
-      else             openCardZoom(card);
-    }, 500);
-  });
-  el.addEventListener('pointerup', () => {
-    clearTimeout(pressTimer);
-    _longFired = false;
-  });
-  el.addEventListener('pointerleave', () => {
-    clearTimeout(pressTimer);
-    _longFired = false;
-  });
 
   return el;
 }
@@ -441,8 +411,9 @@ function handleCardClick(idx) {
 
 function updateScaleButton() {
   const btn = document.getElementById('btn-play-scale');
-  if (!btn || !G || !isHumanTurn() || G.phase === 'improvisacion') { if (btn) btn.style.display = 'none'; return; }
-  const hand = G.players[humanIndex()].hand;
+  const isMy = G && (G._onlineMode ? isMyOnlineTurn() : isHumanTurn());
+  if (!btn || !G || !isMy || G.phase === 'improvisacion') { if (btn) btn.style.display = 'none'; return; }
+  const hand = G._onlineMode ? ON.myHand : G.players[humanIndex()].hand;
   const sel  = G.selectedCards;
   if (sel.length >= 3) {
     const v = getScaleValidation(sel, hand, G.currentNote, G.forcedDir);
@@ -458,6 +429,12 @@ function updateScaleButton() {
 }
 
 function handlePostPlay(result) {
+  const continueTurnFlow = () => {
+    renderGame();
+    if (G.phase === 'improvisacion') { showToast('¡Improvisación! Elige una carta de nota.'); return; }
+    if (!G._onlineMode) scheduleNextTurn();
+  };
+
   if (G.winner !== null) { renderGame(); setTimeout(() => showWinnerScreen(), 600); return; }
 
   if (result.needsTarget) {
@@ -471,7 +448,7 @@ function handlePostPlay(result) {
       resolveTarget(result.needsTarget, result.playerIdx, targetIdx);
       renderGame();
       if (G.winner !== null) setTimeout(() => showWinnerScreen(), 600);
-      else scheduleNextTurn();
+      else if (!G._onlineMode) scheduleNextTurn();
     });
     renderGame(); return;
   }
@@ -487,14 +464,47 @@ function handlePostPlay(result) {
       }
       renderGame();
       if (G.winner !== null) setTimeout(() => showWinnerScreen(), 600);
-      else scheduleNextTurn();
+      else if (!G._onlineMode) scheduleNextTurn();
     });
     renderGame(); return;
   }
 
-  renderGame();
-  if (G.phase === 'improvisacion') { showToast('¡Improvisación! Elige una carta de nota.'); return; }
-  scheduleNextTurn();
+  if (result.scalePlayOrder && result.scalePlayOrder.length > 0) {
+    playScaleSequenceAnimation(result.scalePlayOrder, continueTurnFlow);
+    return;
+  }
+
+  continueTurnFlow();
+}
+
+function playScaleSequenceAnimation(notes, onDone) {
+  const board = document.querySelector('.board-center');
+  if (!board || !notes || notes.length === 0) {
+    if (typeof onDone === 'function') onDone();
+    return;
+  }
+
+  const wrap = document.createElement('div');
+  wrap.className = 'scale-seq-overlay';
+
+  notes.forEach((note, idx) => {
+    const chip = document.createElement('div');
+    chip.className = `scale-seq-chip ${String(note).toLowerCase()}`;
+    chip.style.animationDelay = `${idx * 140}ms`;
+    chip.textContent = note;
+    wrap.appendChild(chip);
+  });
+
+  board.appendChild(wrap);
+
+  const totalMs = 520 + (notes.length * 140);
+  setTimeout(() => {
+    wrap.classList.add('done');
+    setTimeout(() => {
+      wrap.remove();
+      if (typeof onDone === 'function') onDone();
+    }, 220);
+  }, totalMs);
 }
 
 function renderActionBar() {
@@ -592,6 +602,7 @@ let aiTimer = null;
 
 function scheduleNextTurn() {
   if (G.winner) return;
+  if (G._onlineMode) { renderGame(); return; }
 
   if (isHumanTurn()) {
     const cur          = G.players[G.currentPlayer];

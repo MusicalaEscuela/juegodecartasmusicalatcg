@@ -1047,7 +1047,7 @@ button {
 .center-board {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: 14px;
+  gap: 16px;
   align-items: center;
   flex-shrink: 0;
   overflow: visible;
@@ -1065,8 +1065,8 @@ button {
 
 /* Deck */
 .deck-pile {
-  width: 64px;
-  height: 90px;
+  width: 68px;
+  height: 96px;
   border-radius: 10px;
   cursor: pointer;
   overflow: hidden;
@@ -1124,8 +1124,8 @@ button {
 
 /* Discard */
 .discard-pile {
-  width: 64px;
-  height: 90px;
+  width: 68px;
+  height: 96px;
   border-radius: 10px;
   border: 1.5px dashed rgba(255,255,255,0.12);
   display: flex;
@@ -1163,8 +1163,8 @@ button {
   /* Preserve card aspect ratio at all times */
   aspect-ratio: 63 / 88;
   /* Fill available horizontal space, cap at sensible max */
-  width: min(100%, 230px);
-  max-height: clamp(120px, 28vh, 260px);
+  width: min(100%, 246px);
+  max-height: clamp(126px, 30vh, 280px);
   /* Prevent flex squishing */
   flex-shrink: 0;
   border-radius: 20px;
@@ -1325,7 +1325,7 @@ button {
   background: linear-gradient(180deg, rgba(255,255,255,0.04) 0%, rgba(255,255,255,0.02) 100%);
   border: 1px solid var(--border-dim);
   border-radius: var(--radius-lg);
-  padding: 10px 12px 10px;
+  padding: 10px 12px 8px;
   flex: 1;
   min-height: 0;
   display: flex;
@@ -1388,11 +1388,11 @@ button {
 
 .hand-cards {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   overflow-x: auto;
   overflow-y: visible;
   padding-bottom: 6px;
-  padding-top: 18px;
+  padding-top: 14px;
   flex: 1;
   min-height: 80px;       /* FIX: ensure cards are never fully squished */
   align-items: flex-end;

@@ -1,15 +1,15 @@
-/* =========================================================
+﻿/* =========================================================
    animations.css
    Juego de Cartas Musicala
-   Animaciones suaves, táctiles y elegantes (sin marear gente)
-   ✅ Fix flip 3D: rota .card-inner, no el contenedor .card
-   ✅ Evita que hover/active peleen con el flip
-   ✅ Usa transform en capas separadas (container vs inner)
-   ✅ Accesibilidad: reduced motion + focus-visible
+   Animaciones suaves, tctiles y elegantes (sin marear gente)
+    Fix flip 3D: rota .card-inner, no el contenedor .card
+    Evita que hover/active peleen con el flip
+    Usa transform en capas separadas (container vs inner)
+    Accesibilidad: reduced motion + focus-visible
 ========================================================= */
 
 /* =============================
-   Variables de animación
+   Variables de animacin
 ============================= */
 
 :root {
@@ -60,7 +60,7 @@
          .card-back
 ============================= */
 
-/* El contenedor maneja perspectiva y “micro movimientos” (hover/tap) */
+/* El contenedor maneja perspectiva y micro movimientos (hover/tap) */
 .card {
   perspective: var(--card-perspective);
   -webkit-tap-highlight-color: transparent;
@@ -75,7 +75,7 @@
   will-change: transform;
 }
 
-/* Caras: evita que se vea el “reverso” fantasma */
+/* Caras: evita que se vea el reverso fantasma */
 .card .card-front,
 .card .card-back {
   backface-visibility: hidden;
@@ -94,7 +94,7 @@
 
 /* =============================
    Hover Elevation (desktop)
-   Importante: NO tocamos .card-inner aquí, para no pelear con el flip
+   Importante: NO tocamos .card-inner aqu, para no pelear con el flip
 ============================= */
 
 @media (hover: hover) and (pointer: fine) {
@@ -172,7 +172,7 @@
 
 /* =============================
    Shake (invalid action)
-   Solo “agita” el contenedor para no romper flip
+   Solo agita el contenedor para no romper flip
 ============================= */
 
 .shake {
@@ -203,7 +203,7 @@
 }
 
 /* =============================
-   Subtle “press” for buttons/cards
+   Subtle press for buttons/cards
    (utilidad general)
 ============================= */
 

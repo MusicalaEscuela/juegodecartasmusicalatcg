@@ -419,7 +419,8 @@ function updateScaleButton() {
     const v = getScaleValidation(sel, hand, G.currentNote, G.forcedDir);
     if (v.valid) {
       btn.style.display = 'inline-block';
-      btn.textContent   = `🎵 Escala ${v.dir === 'asc' ? '↑' : '↓'} (${sel.length} notas)`;
+      const dirLabel = v.dir === 'asc' ? '↑' : (v.dir === 'desc' ? '↓' : '↕');
+      btn.textContent   = `🎵 Escala ${dirLabel} (${sel.length} notas)`;
       btn.classList.add('active-scale');
       return;
     }
@@ -429,6 +430,11 @@ function updateScaleButton() {
 }
 
 function handlePostPlay(result) {
+  if (result.pendingOnlinePush) {
+    renderGame();
+    return;
+  }
+
   const continueTurnFlow = () => {
     renderGame();
     if (G.phase === 'improvisacion') { showToast('¡Improvisación! Elige una carta de nota.'); return; }
@@ -444,8 +450,9 @@ function handlePostPlay(result) {
       cambioNotas: { title: 'Cambio de Notas', desc: 'Elige el jugador con quien intercambiar tu mano.' },
     };
     const { title, desc } = labels[result.needsTarget] || { title: 'Elegir jugador', desc: '' };
-    showPlayerSelectModal(title, desc, result.playerIdx, (targetIdx) => {
-      resolveTarget(result.needsTarget, result.playerIdx, targetIdx);
+    showPlayerSelectModal(title, desc, result.playerIdx, async (targetIdx) => {
+      if (G._onlineMode) await onlineResolveTarget(result.needsTarget, result.playerIdx, targetIdx);
+      else resolveTarget(result.needsTarget, result.playerIdx, targetIdx);
       renderGame();
       if (G.winner !== null) setTimeout(() => showWinnerScreen(), 600);
       else if (!G._onlineMode) scheduleNextTurn();
@@ -455,13 +462,14 @@ function handlePostPlay(result) {
 
   if (result.needsNotePasoChoice) {
     const options = result.noteOptions || [];
-    showNotePasoChoiceModal(G.currentNote, options, (chosenNote) => {
+    showNotePasoChoiceModal(G.currentNote, options, async (chosenNote) => {
       const pick = resolveNotePasoChoice(result.playerIdx, chosenNote);
       if (!pick.ok) {
         showToast(pick.error || 'No se pudo aplicar Nota de Paso.');
         renderGame();
         return;
       }
+      if (G._onlineMode) await pushOnlineStateAfterPendingChoice();
       renderGame();
       if (G.winner !== null) setTimeout(() => showWinnerScreen(), 600);
       else if (!G._onlineMode) scheduleNextTurn();

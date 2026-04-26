@@ -109,8 +109,9 @@ function getValidMask(hand, currentNote, forcedDir) {
 }
 
 /**
- * Valida si un conjunto de ndices forma una escala jugable (mnimo 3 notas consecutivas).
- * Devuelve { valid, dir, lastNote, playOrder } o { valid: false }
+ * Valida si un conjunto de indices forma una frase jugable de 3+ notas.
+ * Respeta el orden de seleccion y permite devolverse paso a paso en la escala.
+ * Devuelve { valid, dir, lastNote, playOrder, playIndices } o { valid: false }
  */
 function getScaleValidation(selectedIndices, hand, currentNote, forcedDir) {
   if (selectedIndices.length < 3) return { valid: false };
@@ -118,29 +119,32 @@ function getScaleValidation(selectedIndices, hand, currentNote, forcedDir) {
   if (cards.some(c => c.type !== 'note')) return { valid: false };
 
   const idxs = cards.map(c => noteIndex(c.note));
-  if (new Set(idxs).size !== idxs.length) return { valid: false }; // sin duplicados
-
   const ci  = noteIndex(currentNote);
-  const ascOrder = buildCircularOrder(idxs, 'asc');
-  const descOrder = buildCircularOrder(idxs, 'desc');
-  if (!ascOrder && !descOrder) return { valid: false };
+  if (ci < 0 || idxs.some(i => i < 0)) return { valid: false };
 
   const isNearCurrent = (idx) => (
     idx === ci || idx === nextNoteIndex(ci) || idx === prevNoteIndex(ci)
   );
-  const canAsc  = !!ascOrder  && isNearCurrent(ascOrder[0])  && forcedDir !== 'desc';
-  const canDesc = !!descOrder && isNearCurrent(descOrder[0]) && forcedDir !== 'asc';
-  if (!canAsc && !canDesc) return { valid: false };
 
-  let dir = canAsc ? 'asc' : 'desc';
-  if (forcedDir === 'asc')  dir = 'asc';
-  if (forcedDir === 'desc') dir = 'desc';
+  const first = idxs[0];
+  if (!isNearCurrent(first)) return { valid: false };
+  if (forcedDir === 'asc' && first !== nextNoteIndex(ci)) return { valid: false };
+  if (forcedDir === 'desc' && first !== prevNoteIndex(ci)) return { valid: false };
 
-  const order = dir === 'asc' ? ascOrder : descOrder;
-  if (!order) return { valid: false };
-  const lastNote  = NOTES[order[order.length - 1]];
-  const playOrder = order.map(i => NOTES[i]);
+  const steps = [];
+  for (let i = 1; i < idxs.length; i++) {
+    const prev = idxs[i - 1];
+    const cur = idxs[i];
+    if (cur === nextNoteIndex(prev)) steps.push('asc');
+    else if (cur === prevNoteIndex(prev)) steps.push('desc');
+    else return { valid: false };
+  }
 
-  return { valid: true, dir, lastNote, playOrder };
+  const uniqueSteps = [...new Set(steps)];
+  const dir = uniqueSteps.length === 1 ? uniqueSteps[0] : 'mixed';
+  const lastNote  = NOTES[idxs[idxs.length - 1]];
+  const playOrder = idxs.map(i => NOTES[i]);
+
+  return { valid: true, dir, lastNote, playOrder, playIndices: [...selectedIndices] };
 }
 

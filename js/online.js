@@ -241,10 +241,24 @@ function onlineHumanPlayCard(cardIdx) {
   if (!G._onlineMode) return humanPlayCard(cardIdx);
   if (ON.myIndex !== G.currentPlayer) return { ok: false, error: 'No es tu turno.' };
 
+  const card = G.players[ON.myIndex]?.hand?.[cardIdx];
+  if (card?.type === 'special' && ['partitura', 'rotacion'].includes(card.effect)) {
+    return onlineHumanPlayCardWithAllHands(cardIdx);
+  }
+
   // Ejecutar lgica local primero
   const result = humanPlayCard(cardIdx);
-  if (result.ok) _pushOnlineState();
+  if (result.ok && !result.needsTarget && !result.needsNotePasoChoice) _pushOnlineState();
   return result;
+}
+
+function onlineHumanPlayCardWithAllHands(cardIdx) {
+  const placeholder = { ok: true, pendingOnlinePush: true };
+  syncAllHandsThenPlay(cardIdx).catch(e => {
+    console.error('[Online] Error al sincronizar jugada especial:', e);
+    showToast('No se pudo sincronizar la jugada online.');
+  });
+  return placeholder;
 }
 
 function onlineHumanDraw() {
@@ -277,6 +291,63 @@ async function _pushOnlineState() {
   await writeGameState(ON.roomCode, publicState);
 }
 
+async function syncAllHandsThenPlay(cardIdx) {
+  const hands = await Promise.all(G.players.map((p, i) => (
+    i === ON.myIndex ? Promise.resolve([...G.players[i].hand]) : readMyHand(ON.roomCode, p.uid)
+  )));
+
+  G.players.forEach((p, i) => { p.hand = hands[i]; });
+  const result = humanPlayCard(cardIdx);
+  if (!result.ok) {
+    showToast(result.error || 'No se pudo jugar esa carta.');
+    renderGame();
+    return;
+  }
+
+  await Promise.all(G.players.map(p => writeMyHand(ON.roomCode, p.uid, p.hand)));
+  ON.myHand = [...G.players[ON.myIndex].hand];
+  const publicState = buildPublicState();
+  await writeGameState(ON.roomCode, publicState);
+  handlePostPlay(result);
+}
+
+async function pushOnlineStateAfterPendingChoice() {
+  if (!G || !G._onlineMode) return;
+  await _pushOnlineState();
+}
+
+async function onlineResolveTarget(effect, playerIdx, targetIdx) {
+  if (!G._onlineMode) {
+    resolveTarget(effect, playerIdx, targetIdx);
+    return;
+  }
+
+  const currentUid = G.players[playerIdx]?.uid;
+  const targetUid = G.players[targetIdx]?.uid;
+  if (!currentUid || !targetUid) return;
+
+  const currentHand = playerIdx === ON.myIndex
+    ? [...G.players[playerIdx].hand]
+    : await readMyHand(ON.roomCode, currentUid);
+  const targetHand = targetIdx === ON.myIndex
+    ? [...G.players[targetIdx].hand]
+    : await readMyHand(ON.roomCode, targetUid);
+
+  G.players[playerIdx].hand = currentHand;
+  G.players[targetIdx].hand = targetHand;
+
+  resolveTarget(effect, playerIdx, targetIdx);
+
+  await writeMyHand(ON.roomCode, currentUid, G.players[playerIdx].hand);
+  await writeMyHand(ON.roomCode, targetUid, G.players[targetIdx].hand);
+
+  if (playerIdx === ON.myIndex) ON.myHand = [...G.players[playerIdx].hand];
+  if (targetIdx === ON.myIndex) ON.myHand = [...G.players[targetIdx].hand];
+
+  const publicState = buildPublicState();
+  await writeGameState(ON.roomCode, publicState);
+}
+
 function buildPublicState() {
   return {
     deck:          G.deck,
@@ -286,7 +357,7 @@ function buildPublicState() {
     direction:     G.direction,
     skipNext:      G.skipNext,
     forcedDir:     G.forcedDir,
-    selectedCards: G.selectedCards,
+    selectedCards: [],
     log:           G.log,
     noteHistory:   G.noteHistory,
     winner:        G.winner,

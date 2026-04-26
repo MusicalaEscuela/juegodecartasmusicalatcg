@@ -107,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-menu').addEventListener('click', () => {
     showModal(`
-      <p class="modal-title">Men</p>
+      <p class="modal-title">Opciones</p>
       <div class="modal-actions" style="flex-direction:column;gap:10px;">
         <button class="modal-btn primary"   onclick="closeModal(); startGame();">Reiniciar partida</button>
         <button class="modal-btn secondary" onclick="closeModal(); showFullHistory();"> Historial</button>

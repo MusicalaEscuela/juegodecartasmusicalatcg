@@ -151,14 +151,9 @@ function humanPlayScale(indices) {
   const validation = getScaleValidation(indices, player.hand, G.currentNote, G.forcedDir);
   if (!validation.valid) return { ok: false, error: 'Las cartas seleccionadas no forman una escala vlida.' };
 
-  const sorted = [...indices].sort((a, b) => {
-    const ni = noteIndex(player.hand[a].note);
-    const nj = noteIndex(player.hand[b].note);
-    return validation.dir === 'asc' ? ni - nj : nj - ni;
-  });
-
-  const noteNames = sorted.map(i => player.hand[i].note);
-  const byDesc = [...sorted].sort((a, b) => b - a);
+  const playIndices = validation.playIndices || [...indices];
+  const noteNames = validation.playOrder || playIndices.map(i => player.hand[i].note);
+  const byDesc = [...playIndices].sort((a, b) => b - a);
   byDesc.forEach(i => {
     const card = player.hand.splice(i, 1)[0];
     G.discard.push(card);
@@ -169,7 +164,7 @@ function humanPlayScale(indices) {
   G.forcedDir    = null;
   G.selectedCards = [];
 
-  addLog(`${player.name} jug escala ${validation.dir === 'asc' ? '' : ''}: ${noteNames.join('  ')}.`);
+  addLog(`${player.name} jug escala: ${noteNames.join('  ')}.`);
   checkMusicala(G.currentPlayer);
   if (checkWinner(G.currentPlayer)) return { ok: true, scalePlayOrder: noteNames };
   advanceTurn();

@@ -810,6 +810,18 @@ button {
   border-color: var(--border-hi);
 }
 
+#btn-menu::before {
+  content: "";
+  width: 16px;
+  height: 12px;
+  display: block;
+  background:
+    linear-gradient(currentColor, currentColor) 0 0 / 100% 2px no-repeat,
+    linear-gradient(currentColor, currentColor) 0 5px / 100% 2px no-repeat,
+    linear-gradient(currentColor, currentColor) 0 10px / 100% 2px no-repeat;
+  border-radius: 2px;
+}
+
 .header-actions {
   position: relative;
   flex-shrink: 0;
@@ -2097,6 +2109,15 @@ button {
 .help-btn:hover {
   transform: scale(1.12) rotate(-8deg);
   box-shadow: 0 8px 28px rgba(245,158,11,0.7);
+}
+
+.help-btn::before {
+  content: "?";
+  font-family: var(--font-title);
+  font-size: 28px;
+  line-height: 1;
+  color: #fff7cc;
+  text-shadow: 0 2px 0 rgba(120,70,0,0.55), 0 0 10px rgba(255,255,255,0.45);
 }
 
 .help-panel {

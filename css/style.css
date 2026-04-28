@@ -2744,3 +2744,15 @@ button {
   text-align: center;
 }
 
+.audio-toggle {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.audio-toggle.is-on {
+  color: #ffffff;
+  border-color: rgba(255,255,255,0.35);
+  background: linear-gradient(135deg, var(--azul-mozart, #0C41C4), var(--violeta-beeth, #680DBF));
+  box-shadow: 0 0 14px rgba(87,41,255,0.35);
+}
+

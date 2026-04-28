@@ -182,6 +182,7 @@
   </style>
 </head>
 <body>
+<audio id="bg-music" src="assets/audio/musicala_bg_loop.mp3" preload="auto" loop></audio>
 
 <!-- 
      INTRO SCREEN
@@ -401,6 +402,7 @@
       <span class="status-chip" id="chip-deck">Mazo: 0</span>
       <span class="status-chip online-badge" id="chip-online" style="display:none"> Online</span>
     </div>
+    <button class="btn-icon audio-toggle" id="btn-audio-toggle" type="button" title="Música" aria-label="Activar o desactivar música" aria-pressed="false">🔇</button>
     <button class="btn-icon" id="btn-menu" title="Menu de opciones" aria-label="Menu de opciones"></button>
   </header>
 
@@ -1192,6 +1194,7 @@
 </script>
 
 <!--  main.js cargado DESPUS de game-events.js  -->
+<script src="js/audio.js?v=20260428-1"></script>
 <script src="js/main.js?v=20260419-1"></script>
 
 <!-- 

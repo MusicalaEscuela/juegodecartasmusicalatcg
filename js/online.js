@@ -143,6 +143,10 @@ function subscribeToRoom(code) {
     }
 
     if (room.status === 'playing') {
+      if (typeof window.startBackgroundMusic === 'function') {
+        window.startBackgroundMusic();
+      }
+
       // Siempre refrescar mano privada desde subdoc para evitar desincronizacin.
       ON.myHand = await readMyHand(code, ON.user.uid);
       ON.latestState = room.gameState;

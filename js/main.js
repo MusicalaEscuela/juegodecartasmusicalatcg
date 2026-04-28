@@ -139,6 +139,10 @@ document.addEventListener('DOMContentLoaded', () => {
 //  Start game 
 
 function startGame() {
+  if (typeof window.startBackgroundMusic === 'function') {
+    window.startBackgroundMusic();
+  }
+
   if (aiTimer) clearTimeout(aiTimer);
   initGame(setupPlayers);
   showScreen('screen-game');

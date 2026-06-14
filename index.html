@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="css/style.css?v=20260419-1" />
   <link rel="stylesheet" href="css/card.css?v=20260419-1" />
   <link rel="stylesheet" href="css/animations.css?v=20260419-1" />
+  <link rel="stylesheet" href="css/enhancements.css?v=20260614-1" />
 
   <!-- 
        GAME EVENTS - CSS (equivalente a css/game-events.css)
@@ -204,25 +205,25 @@
         </svg>
         <span class="logo-text">musicala</span>
       </div>
-      <p class="logo-slogan">vida, alma y musica</p>
+      <p class="logo-slogan">vida, alma y música</p>
     </div>
 
     <div class="intro-hero">
-      <h1 class="intro-title">Afinadito te ves<br><strong>mas bonito</strong></h1>
+      <h1 class="intro-title">Afinadito te ves<br><strong>más bonito</strong></h1>
       <p class="intro-tagline">El juego de cartas musical de Musicala</p>
     </div>
 
     <div class="intro-description">
       <p>En <strong>Musicala</strong> cada jugador recibe 7 cartas y el objetivo es simple:
-      deshacerse de todas antes que los demas. Las cartas siguen la escala musical -
+      deshacerse de todas antes que los demás. Las cartas siguen la escala musical –
       DO, RE, MI, FA, SOL, LA, SI.</p>
       <p>Hay <strong>cartas especiales</strong> que cambian el rumbo del juego y pueden darle
       la vuelta completa a la partida.</p>
     </div>
 
     <div class="intro-features">
-      <div class="intro-feature"><span class="feature-icon"></span><span>2 a 8 musicos</span></div>
-      <div class="intro-feature"><span class="feature-icon"></span><span>86 cartas unicas</span></div>
+      <div class="intro-feature"><span class="feature-icon"></span><span>2 a 8 músicos</span></div>
+      <div class="intro-feature"><span class="feature-icon"></span><span>86 cartas únicas</span></div>
       <div class="intro-feature"><span class="feature-icon"></span><span>Multijugador local</span></div>
       <div class="intro-feature"><span class="feature-icon"></span><span>Escalas musicales</span></div>
     </div>
@@ -239,7 +240,7 @@
 
     <div class="intro-actions">
       <button class="btn-primary btn-intro-main" id="btn-intro-play">Jugar local / CPU</button>
-      <button class="btn-online btn-intro-main" id="btn-intro-online">Jugar en linea</button>
+      <button class="btn-online btn-intro-main" id="btn-intro-online">Jugar en línea</button>
       <button class="btn-secondary" id="btn-intro-library">Biblioteca de cartas</button>
       <button class="btn-secondary" id="btn-intro-rules">Ver reglas</button>
     </div>
@@ -265,18 +266,18 @@
         </svg>
         <span class="logo-text">musicala</span>
       </div>
-      <p class="logo-slogan">vida, alma y musica</p>
+      <p class="logo-slogan">vida, alma y música</p>
     </div>
 
-    <h1 class="setup-title">Jugar en linea </h1>
-    <p class="setup-subtitle">Conectate con amigos desde cualquier dispositivo</p>
+    <h1 class="setup-title">Jugar en línea </h1>
+    <p class="setup-subtitle">Conéctate con amigos desde cualquier dispositivo</p>
 
     <!-- Auth area -->
     <div id="online-auth-area" class="online-auth-area">
-      <div class="online-loading">Cargando</div>
+      <div class="online-loading">Cargando…</div>
     </div>
 
-    <!-- Lobby actions (crear / unirse) - aparece cuando hay sesin -->
+    <!-- Lobby actions (crear / unirse) - aparece cuando hay sesión -->
     <div id="online-lobby-actions"></div>
 
     <!-- Spinner -->
@@ -301,17 +302,17 @@
     <h1 class="setup-title">Sala de espera</h1>
 
     <div class="lobby-code-box">
-      <span class="lobby-code-label">Codigo de sala</span>
+      <span class="lobby-code-label">Código de sala</span>
       <span class="lobby-code-display" id="lobby-code-display">----</span>
-      <button class="btn-link-small" id="btn-copy-code" title="Copiar cdigo"> Copiar</button>
+      <button class="btn-link-small" id="btn-copy-code" title="Copiar código"> Copiar</button>
     </div>
 
     <div class="setup-card">
       <h2 class="section-label">Jugadores conectados</h2>
       <div id="lobby-players-list" class="lobby-players-list"></div>
-      <p class="rules-hint" style="margin-top:8px">Comparte el cdigo con tus amigos para que se unan.</p>
+      <p class="rules-hint" style="margin-top:8px">Comparte el código con tus amigos para que se unan.</p>
       <button class="btn-primary" id="btn-lobby-start" style="display:none;margin-top:12px">
-        Empezar partida!
+        ¡Empezar partida!
       </button>
     </div>
 
@@ -339,11 +340,11 @@
         </svg>
         <span class="logo-text">musicala</span>
       </div>
-      <p class="logo-slogan">vida, alma y musica</p>
+      <p class="logo-slogan">vida, alma y música</p>
     </div>
 
     <h1 class="setup-title">Configurar partida</h1>
-    <p class="setup-subtitle">Cuntos musicos van a jugar?</p>
+    <p class="setup-subtitle">¿Cuántos músicos van a jugar?</p>
 
     <div class="setup-card">
       <h2 class="section-label">Jugadores</h2>
@@ -352,16 +353,19 @@
         <button class="btn-add" id="btn-add-player">+ Agregar jugador</button>
       </div>
       <div class="setup-info">
-        <span class="info-badge">2-8 musicos</span>
-        <span class="info-badge">7 cartas iniciales</span>
+        <span class="info-badge">2-8 músicos</span>
         <span class="info-badge">86 cartas totales</span>
       </div>
-      <button class="btn-primary" id="btn-start">Comenzar partida!</button>
+
+      <!-- Opciones avanzadas de partida (se renderizan desde ui.js) -->
+      <div id="setup-options" class="setup-options"></div>
+
+      <button class="btn-primary" id="btn-start">¡Comenzar partida!</button>
     </div>
 
     <div class="rules-preview">
       <h3>Objetivo del juego</h3>
-      <p>S el primero en quedarte sin cartas siguiendo la secuencia musical:</p>
+      <p>Sé el primero en quedarte sin cartas siguiendo la secuencia musical:</p>
       <div class="sequence-preview">
         <span class="note-pill do">DO</span><span class="arrow">></span>
         <span class="note-pill re">RE</span><span class="arrow">></span>
@@ -371,7 +375,7 @@
         <span class="note-pill la">LA</span><span class="arrow">></span>
         <span class="note-pill si">SI</span>
       </div>
-      <p class="rules-hint">Puedes jugar la nota siguiente, la anterior, o la misma nota en juego. O una escala de 3+ notas de un golpe!</p>
+      <p class="rules-hint">Puedes jugar la nota siguiente, la anterior, o la misma nota en juego. ¡O una escala de 3+ notas de un golpe!</p>
     </div>
   </div>
 </div>
@@ -398,8 +402,9 @@
     </div>
     <div class="header-status">
       <span class="status-chip" id="chip-turn">Tu turno</span>
-      <span class="status-chip" id="chip-direction"> Horario</span>
+      <span class="status-chip" id="chip-direction">⟳ Horario</span>
       <span class="status-chip" id="chip-deck">Mazo: 0</span>
+      <span class="status-chip" id="chip-difficulty" style="display:none">Media</span>
       <span class="status-chip online-badge" id="chip-online" style="display:none"> Online</span>
     </div>
     <button class="btn-icon audio-toggle" id="btn-audio-toggle" type="button" title="Música" aria-label="Activar o desactivar música" aria-pressed="false">🔇</button>
@@ -474,6 +479,7 @@
         </div>
       </div>
       <div class="hand-cards" id="hand-cards"></div>
+      <div class="scale-preview" id="scale-preview" style="display:none"></div>
       <div class="hand-hint" id="hand-hint">Selecciona notas y toca Jugar escala para lanzarla.</div>
     </div>
   </div>
@@ -492,6 +498,7 @@
         <button class="help-close" onclick="toggleHelp()"></button>
       </div>
       <div class="help-body">
+        <button class="help-tutorial-btn" type="button" onclick="if(window.MTutorial) MTutorial.open(0)">📖 Ver tutorial paso a paso</button>
         <div class="help-section">
           <div class="help-section-title">Orden Ascendente</div>
           <div class="help-scale">
@@ -517,14 +524,14 @@
           </div>
         </div>
         <div class="help-tip" id="help-tip">
-           Nota actual: <strong id="help-tip-note">-</strong>.
-          Puedes jugar <strong id="help-tip-up">-</strong> () o <strong id="help-tip-down">-</strong> ().
+          💡 Nota actual: <strong id="help-tip-note">-</strong>.
+          Puedes jugar <strong id="help-tip-up">-</strong> (↑) o <strong id="help-tip-down">-</strong> (↓).
         </div>
         <div class="help-section" style="margin-top:12px;">
           <div class="help-section-title">Tipos de carta</div>
           <div class="help-types">
             <div class="type-row"><span class="type-badge-help t-note">NOTA</span> Juega la nota en la escala</div>
-            <div class="type-row"><span class="type-badge-help t-alt">ALTERACIN</span> Sostenido, Bemol, Becuadro</div>
+            <div class="type-row"><span class="type-badge-help t-alt">ALTERACIÓN</span> Sostenido, Bemol, Becuadro</div>
             <div class="type-row"><span class="type-badge-help t-special">ESPECIAL</span> Efectos que alteran el juego</div>
           </div>
         </div>
@@ -540,15 +547,15 @@
  -->
 <div class="pass-screen-overlay" id="pass-screen-overlay" style="display:none">
   <div class="pass-screen-content">
-    <div class="pass-screen-icon"></div>
-    <div class="pass-screen-title">Pasa el dispositivo!</div>
+    <div class="pass-screen-icon">🤝</div>
+    <div class="pass-screen-title">¡Pasa el dispositivo!</div>
     <div class="pass-screen-sub">Es el turno de:</div>
     <div class="pass-screen-name" id="pass-screen-name">Jugador</div>
     <div class="pass-screen-badge">
-      <strong>Cuando ests listo, presiona el botn</strong>
+      <span id="pass-screen-instruction">Cuando estés listo, presiona el botón.</span>
     </div>
     <button class="btn-primary" id="btn-pass-ready" style="max-width:260px">
-      Estoy listo! 
+      ¡Estoy listo! 👀
     </button>
   </div>
 </div>
@@ -578,6 +585,7 @@
     <div class="winner-stats" id="winner-stats"></div>
     <button class="btn-primary" id="btn-play-again">Jugar de nuevo</button>
     <button class="btn-secondary" id="btn-change-players" style="margin-top:8px">Cambiar jugadores</button>
+    <button class="btn-secondary" id="btn-winner-home" style="margin-top:8px">Volver al inicio</button>
   </div>
 </div>
 
@@ -593,6 +601,7 @@
       <div class="card-zoom-name" id="card-zoom-name"></div>
       <div class="card-zoom-type" id="card-zoom-type"></div>
       <div class="card-zoom-desc" id="card-zoom-desc"></div>
+      <div class="card-zoom-playable" id="card-zoom-playable" style="display:none"></div>
     </div>
   </div>
 </div>
@@ -641,10 +650,10 @@
 
     </div>
 
-    <!-- Hint cuando la carta no es valida -->
+    <!-- Hint cuando la carta no es válida -->
     <div class="cam-invalid-hint" id="cam-invalid-hint" style="display:none">
       <span class="cam-hint-icon"></span>
-      <span id="cam-invalid-text">Esta carta no es valida en este turno</span>
+      <span id="cam-invalid-text">Esta carta no es válida en este turno</span>
     </div>
 
   </div>
@@ -659,11 +668,14 @@
 </div>
 
 <!--  Scripts externos  -->
+<script src="js/settings.js?v=20260614-1"></script>
+<script src="js/sfx.js?v=20260614-1"></script>
 <script src="js/cards.js?v=20260419-1"></script>
-<script src="js/game.js?v=20260419-1"></script>
-<script src="js/ui.js?v=20260419-1"></script>
+<script src="js/game.js?v=20260614-1"></script>
+<script src="js/ui.js?v=20260614-1"></script>
+<script src="js/tutorial.js?v=20260614-1"></script>
 <script src="js/firebase.js?v=20260419-1"></script>
-<script src="js/online.js?v=20260419-1"></script>
+<script src="js/online.js?v=20260614-1"></script>
 
 <!-- 
      CARD ACTION MENU - CSS + JS inline
@@ -945,7 +957,7 @@
     } else if (!valid) {
       btnPlay.disabled   = true;
       hintEl.style.display = 'flex';
-      hintText.textContent = 'Esta carta no es valida en este turno.';
+      hintText.textContent = 'Esta carta no es válida en este turno.';
       playSub.textContent  = 'No se puede jugar ahora';
     } else {
       btnPlay.disabled   = false;
@@ -1067,7 +1079,7 @@
   //  Turn banner 
   window.showTurnBanner = function (name) {
     if (!bannerEl) return;
-    bannerEl.textContent = ' Turno de ' + name;
+    bannerEl.textContent = '▶ Turno de ' + name;
     bannerEl.classList.remove('show');
     void bannerEl.offsetWidth; // force reflow para reiniciar animacin
     bannerEl.classList.add('ge-show');
@@ -1119,13 +1131,13 @@
 
     if (type === 'reverse') {
       flashDirectionChip();
-      showSpecialEffect(' Cambio de direccin', 'reverse');
+      showSpecialEffect('🔄 Cambio de dirección', 'reverse');
     } else if (type === 'skip') {
-      showSpecialEffect(' Turno saltado', 'skip');
+      showSpecialEffect('🚫 Turno saltado', 'skip');
     } else if (type === 'draw') {
-      showSpecialEffect(' +2 cartas', 'draw');
+      showSpecialEffect('🃏 +2 cartas', 'draw');
     } else if (type === 'musicala') {
-      showSpecialEffect(' MUSICALA!', 'swap');
+      showSpecialEffect('🎶 ¡MUSICALA!', 'swap');
     }
   }
 
@@ -1195,7 +1207,7 @@
 
 <!--  main.js cargado DESPUS de game-events.js  -->
 <script src="js/audio.js?v=20260428-1"></script>
-<script src="js/main.js?v=20260419-1"></script>
+<script src="js/main.js?v=20260614-1"></script>
 
 <!-- 
      PATCH startGame  llama initGameEvents()

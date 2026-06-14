@@ -8,9 +8,16 @@
 let G = null;
 
 function initGame(playersConfig) {
-  const deck = buildDeck();
+  // Leer preferencias de partida (con valores por defecto seguros).
+  const S = (window.MSettings && MSettings.get()) || {};
+  const difficulty   = S.difficulty || 'media';
+  const initialCards = [5, 7, 9].includes(S.initialCards) ? S.initialCards : 7;
+  const specialsOn   = S.specialsEnabled !== false;
+  const scalesOn     = S.scalesEnabled !== false;
+
+  const deck = buildDeck({ specials: specialsOn });
   const n = playersConfig.length;
-  const hands = playersConfig.map(() => deck.splice(0, 7));
+  const hands = playersConfig.map(() => deck.splice(0, initialCards));
 
   let startIdx = deck.findIndex(c => c.type === 'note');
   if (startIdx === -1) startIdx = 0;
@@ -20,6 +27,8 @@ function initGame(playersConfig) {
     players: playersConfig.map((p, i) => ({
       name: p.name, isHuman: p.isHuman,
       hand: hands[i], musicalaAnnounced: false,
+      // Estadísticas para la pantalla final.
+      scalesPlayed: 0, specialsUsed: 0,
     })),
     deck,
     discard: [startCard],
@@ -35,9 +44,14 @@ function initGame(playersConfig) {
     phase: 'play',
     partituraUsed: 0,
     turnCount: 0,
+    // Configuración activa de esta partida.
+    difficulty,
+    initialCards,
+    specialsEnabled: specialsOn,
+    scalesEnabled: scalesOn,
   };
 
-  addLog(`La secuencia comienza en ${startCard.note}. Que empiece el juego!`);
+  addLog(`La secuencia comienza en ${startCard.note}. ¡Que empiece el juego!`);
 }
 
 //  Helpers 
@@ -65,7 +79,7 @@ function reshuffleIfNeeded() {
     const last = G.discard.pop();
     G.deck = shuffle(G.discard);
     G.discard = [last];
-    addLog('El mazo se agot. Las cartas descartadas se barajaron.');
+    addLog('El mazo se agotó. Las cartas descartadas se barajaron.');
   }
 }
 
@@ -86,7 +100,7 @@ function checkWinner(playerIdx) {
   if (G.players[playerIdx].hand.length === 0) {
     G.winner = playerIdx;
     G.phase = 'ended';
-    addLog(` ${G.players[playerIdx].name} gana la partida.`);
+    addLog(`🏆 ${G.players[playerIdx].name} gana la partida.`);
     return true;
   }
   return false;
@@ -140,7 +154,7 @@ function humanPlayCard(cardIdx) {
   }
 
   const mask = getValidMask(player.hand, G.currentNote, G.forcedDir);
-  if (!mask[cardIdx]) return { ok: false, error: 'Esa carta no es vlida ahora.' };
+  if (!mask[cardIdx]) return { ok: false, error: 'Esa carta no es válida ahora.' };
   const card = player.hand.splice(cardIdx, 1)[0];
   return applyCard(card, G.currentPlayer);
 }
@@ -149,7 +163,7 @@ function humanPlayScale(indices) {
   if (G.winner || !isHumanTurn()) return { ok: false, error: 'No es tu turno.' };
   const player = G.players[G.currentPlayer];
   const validation = getScaleValidation(indices, player.hand, G.currentNote, G.forcedDir);
-  if (!validation.valid) return { ok: false, error: 'Las cartas seleccionadas no forman una escala vlida.' };
+  if (!validation.valid) return { ok: false, error: 'Las cartas seleccionadas no forman una escala válida.' };
 
   const playIndices = validation.playIndices || [...indices];
   const noteNames = validation.playOrder || playIndices.map(i => player.hand[i].note);
@@ -163,8 +177,9 @@ function humanPlayScale(indices) {
   G.currentNote  = validation.lastNote;
   G.forcedDir    = null;
   G.selectedCards = [];
+  player.scalesPlayed = (player.scalesPlayed || 0) + 1;
 
-  addLog(`${player.name} jug escala: ${noteNames.join('  ')}.`);
+  addLog(`${player.name} jugó escala: ${noteNames.join(' → ')}.`);
   checkMusicala(G.currentPlayer);
   if (checkWinner(G.currentPlayer)) return { ok: true, scalePlayOrder: noteNames };
   advanceTurn();
@@ -174,27 +189,28 @@ function humanPlayScale(indices) {
 function humanDraw() {
   if (G.winner || !isHumanTurn()) return { ok: false };
   const mask = getValidMask(G.players[G.currentPlayer].hand, G.currentNote, G.forcedDir);
-  if (mask.some(v => v)) return { ok: false, error: 'Tienes cartas vlidas para jugar.' };
+  if (mask.some(v => v)) return { ok: false, error: 'Tienes cartas válidas para jugar.' };
   const card = drawCard(G.currentPlayer);
-  if (!card) return { ok: false, error: 'El mazo est vaco.' };
+  if (!card) return { ok: false, error: 'El mazo está vacío.' };
   addLog(`${G.players[G.currentPlayer].name} roba una carta.`);
   const newMask  = getValidMask(G.players[G.currentPlayer].hand, G.currentNote, G.forcedDir);
   const drawnIdx = G.players[G.currentPlayer].hand.length - 1;
-  if (newMask[drawnIdx]) {
-    addLog('La carta robada es vlida. Puedes jugarla!');
+  const playable = newMask[drawnIdx];
+  if (playable) {
+    addLog('La carta robada es válida. ¡Puedes jugarla!');
   } else {
     advanceTurn();
   }
-  return { ok: true, drew: card };
+  return { ok: true, drew: card, drewPlayable: playable };
 }
 
 function humanAnnounceMusica() {
-  return { ok: false, error: 'La regla MUSICALA est desactivada.' };
+  return { ok: false, error: 'La regla MUSICALA está desactivada.' };
 }
 
 function penalizeMusicalaMissed(targetIdx) {
   for (let i = 0; i < 2; i++) drawCard(targetIdx);
-  addLog(`${G.players[targetIdx].name} no grit MUSICALA a tiempo. Roba 2 cartas!`);
+  addLog(`${G.players[targetIdx].name} no gritó MUSICALA a tiempo. ¡Roba 2 cartas!`);
 }
 
 //  Apply card effect 
@@ -207,7 +223,7 @@ function applyCard(card, playerIdx) {
     G.currentNote = card.note;
     recordNote(card.note);
     G.forcedDir = null;
-    addLog(`${player.name} jug ${card.note}.`);
+    addLog(`${player.name} jugó ${card.note}.`);
     checkMusicala(playerIdx);
     if (checkWinner(playerIdx)) return { ok: true };
     advanceTurn();
@@ -223,15 +239,15 @@ function applyAlteration(card, playerIdx) {
   if (card.effect === 'sostenido') {
     if (['MI','SI'].includes(G.currentNote)) return { ok: false, error: 'El sostenido no puede jugarse sobre MI ni SI.' };
     G.forcedDir = 'asc';
-    addLog(`${player.name} jug Sostenido . El siguiente debe subir.`);
+    addLog(`${player.name} jugó Sostenido ♯. El siguiente debe subir.`);
   } else if (card.effect === 'bemol') {
     if (['FA','DO'].includes(G.currentNote)) return { ok: false, error: 'El bemol no puede jugarse sobre FA ni DO.' };
     G.forcedDir = 'desc';
-    addLog(`${player.name} jug Bemol . El siguiente debe bajar.`);
+    addLog(`${player.name} jugó Bemol ♭. El siguiente debe bajar.`);
   } else if (card.effect === 'becuadro') {
     if (G.forcedDir === null) return { ok: false, error: 'El becuadro solo se usa si hay sostenido o bemol activo.' };
     G.forcedDir = null;
-    addLog(`${player.name} jug Becuadro . Alteracin cancelada.`);
+    addLog(`${player.name} jugó Becuadro ♮. Alteración cancelada.`);
   }
   checkMusicala(playerIdx);
   if (checkWinner(playerIdx)) return { ok: true };
@@ -241,13 +257,14 @@ function applyAlteration(card, playerIdx) {
 
 function applySpecial(card, playerIdx) {
   const player = G.players[playerIdx];
-  addLog(`${player.name} jug ${card.name}.`);
+  player.specialsUsed = (player.specialsUsed || 0) + 1;
+  addLog(`${player.name} jugó ${card.name}.`);
 
   if (card.effect === 'partitura') {
     G.players.forEach((p, i) => {
       if (i !== playerIdx) while (p.hand.length < 7) { if (!drawCard(i)) break; }
     });
-    addLog('Partitura! Todos los dems tienen ahora 7 cartas.');
+    addLog('¡Partitura! Todos los demás tienen ahora 7 cartas.');
     checkMusicala(playerIdx);
     if (checkWinner(playerIdx)) return { ok: true };
     advanceTurn();
@@ -275,23 +292,30 @@ function applySpecial(card, playerIdx) {
       G.players.forEach((p, i) => {
         p.hand = tmp[(i - G.direction + G.players.length) % G.players.length];
       });
-      addLog('Rotacin de Orquesta! Todas las manos rotaron.');
+      addLog('¡Rotación de Orquesta! Todas las manos rotaron.');
       advanceTurn(); break;
     }
     case 'improvisacion':
       G.phase = 'improvisacion';
-      addLog('Improvisacin! Elige una nota de tu mano.');
+      addLog('¡Improvisación! Elige una nota de tu mano.');
       return { ok: true, phase: 'improvisacion' };
     case 'notaPaso': {
       const ci = noteIndex(G.currentNote);
       const up = NOTES[(ci + 1) % NOTES.length];
       const down = NOTES[(ci - 1 + NOTES.length) % NOTES.length];
       const noteOptions = [up, down];
-      addLog(`${player.name} jug Nota de Paso.`);
+      addLog(`${player.name} jugó Nota de Paso.`);
       return { ok: true, needsNotePasoChoice: true, playerIdx, noteOptions };
     }
-    case 'desafinacion':
-      addLog('Desafinacin!'); advanceTurn(); break;
+    case 'desafinacion': {
+      // El siguiente jugador "desafina": roba 1 carta y pierde el turno.
+      const nxt = nextPlayerIndex();
+      drawCard(nxt);
+      G.skipNext = true;
+      addLog(`¡Desafinación! ${G.players[nxt].name} roba 1 carta y pierde el turno.`);
+      advanceTurn();
+      break;
+    }
     default: advanceTurn();
   }
 
@@ -330,7 +354,7 @@ function resolveNotePasoChoice(playerIdx, chosenNote) {
   const options = [up, down];
 
   if (!options.includes(chosenNote)) {
-    return { ok: false, error: 'Esa nota no es una opcin vlida para Nota de Paso.' };
+    return { ok: false, error: 'Esa nota no es una opción válida para Nota de Paso.' };
   }
 
   G.currentNote = chosenNote;
@@ -344,11 +368,118 @@ function resolveNotePasoChoice(playerIdx, chosenNote) {
   return { ok: true };
 }
 
-//  CPU AI 
+//  CPU AI
+//  Tres niveles de dificultad (G.difficulty):
+//   - 'facil'   : juega la primera carta válida, sin escalas ni estrategia.
+//   - 'media'   : prioriza notas, juega escalas largas y usa algunas especiales;
+//                 dirige sus cartas ofensivas al rival con menos cartas.
+//   - 'dificil' : busca escalas siempre que pueda, conserva/usa especiales para
+//                 bloquear al rival que está por ganar.
+
+// Busca la escala monótona (ascendente o descendente) más larga jugable.
+// Devuelve un array de índices de la mano en orden de juego, o null.
+function findBestAIScale(hand, currentNote, forcedDir) {
+  if (!G.scalesEnabled) return null;
+
+  const byNote = {};                       // noteIndex -> [handIndex, ...]
+  hand.forEach((c, i) => {
+    if (c.type === 'note') {
+      const ni = noteIndex(c.note);
+      (byNote[ni] = byNote[ni] || []).push(i);
+    }
+  });
+
+  const ci = noteIndex(currentNote);
+  let best = null;
+
+  ['asc', 'desc'].forEach(dir => {
+    if (forcedDir === 'asc'  && dir !== 'asc')  return;
+    if (forcedDir === 'desc' && dir !== 'desc') return;
+
+    let starts;
+    if (forcedDir === 'asc')       starts = [nextNoteIndex(ci)];
+    else if (forcedDir === 'desc') starts = [prevNoteIndex(ci)];
+    else                           starts = [ci, nextNoteIndex(ci), prevNoteIndex(ci)];
+
+    starts.forEach(start => {
+      if (!byNote[start]) return;
+      const used = {};
+      const seq = [];
+      let cur = start;
+      while (byNote[cur] && (used[cur] || 0) < byNote[cur].length && seq.length < NOTES.length) {
+        seq.push(byNote[cur][used[cur] || 0]);
+        used[cur] = (used[cur] || 0) + 1;
+        cur = dir === 'asc' ? nextNoteIndex(cur) : prevNoteIndex(cur);
+      }
+      if (seq.length >= 3 && (!best || seq.length > best.length)) best = seq;
+    });
+  });
+
+  return best;
+}
+
+// Ejecuta una escala para un jugador CPU (sin las comprobaciones de turno humano).
+function aiPlayScale(playerIdx, indices) {
+  const player = G.players[playerIdx];
+  const validation = getScaleValidation(indices, player.hand, G.currentNote, G.forcedDir);
+  if (!validation.valid) return false;
+
+  const playIndices = validation.playIndices || [...indices];
+  const noteNames = validation.playOrder || playIndices.map(i => player.hand[i].note);
+  [...playIndices].sort((a, b) => b - a).forEach(i => {
+    const card = player.hand.splice(i, 1)[0];
+    G.discard.push(card);
+  });
+
+  noteNames.forEach(n => recordNote(n));
+  G.currentNote = validation.lastNote;
+  G.forcedDir = null;
+  player.scalesPlayed = (player.scalesPlayed || 0) + 1;
+  addLog(`${player.name} jugó escala: ${noteNames.join(' → ')}.`);
+  checkMusicala(playerIdx);
+  if (checkWinner(playerIdx)) return true;
+  advanceTurn();
+  return true;
+}
+
+function aiRandomOpponent(playerIdx) {
+  const targets = G.players.map((_, i) => i).filter(i => i !== playerIdx);
+  return targets[Math.floor(Math.random() * targets.length)];
+}
+
+// Rival con menos cartas (el más cerca de ganar) → recibe las cartas ofensivas.
+function aiPickTarget(playerIdx) {
+  const opponents = G.players
+    .map((p, i) => ({ i, n: p.hand.length }))
+    .filter(o => o.i !== playerIdx)
+    .sort((a, b) => a.n - b.n);
+  return opponents.length ? opponents[0].i : playerIdx;
+}
+
+function aiChooseCardIndex(playerIdx, validIndices, difficulty) {
+  const hand = G.players[playerIdx].hand;
+  if (difficulty === 'facil') return validIndices[0];
+
+  const notes    = validIndices.filter(i => hand[i].type === 'note');
+  const specials = validIndices.filter(i => hand[i].type === 'special');
+  const alts     = validIndices.filter(i => hand[i].type === 'alt');
+
+  if (difficulty === 'dificil') {
+    // Si un rival está por ganar, juega una especial ofensiva para bloquearlo.
+    const threat = G.players.some((p, i) => i !== playerIdx && p.hand.length <= 2);
+    const offensive = specials.find(i =>
+      ['ensayo', 'robaShow', 'cambioNotas', 'fantasma'].includes(hand[i].effect));
+    if (threat && offensive !== undefined) return offensive;
+  }
+
+  // media y dificil (sin amenaza): nota → especial → alteración.
+  return notes[0] ?? specials[0] ?? alts[0] ?? validIndices[0];
+}
 
 function aiTurn(playerIdx) {
   if (G.winner) return;
   const player = G.players[playerIdx];
+  const difficulty = G.difficulty || 'media';
 
   if (G.phase === 'improvisacion') {
     const noteCards = player.hand.filter(c => c.type === 'note');
@@ -367,22 +498,23 @@ function aiTurn(playerIdx) {
     return;
   }
 
-  const mask = getValidMask(player.hand, G.currentNote, G.forcedDir);
-  let playIdx = -1;
-
-  // Smart priority: prefer note  alt  special; prefer lower hand count
-  const validIndices = player.hand.map((c, i) => mask[i] ? i : -1).filter(i => i >= 0);
-  if (validIndices.length > 0) {
-    // pick note card if possible
-    playIdx = validIndices.find(i => player.hand[i].type === 'note') ?? validIndices[0];
+  // Intento de escala (vaciar mano rápido). Difícil siempre; media solo escalas largas.
+  if (difficulty !== 'facil' && G.scalesEnabled) {
+    const scale = findBestAIScale(player.hand, G.currentNote, G.forcedDir);
+    if (scale && (difficulty === 'dificil' || scale.length >= 4)) {
+      if (aiPlayScale(playerIdx, scale)) return;
+    }
   }
+
+  const mask = getValidMask(player.hand, G.currentNote, G.forcedDir);
+  const validIndices = player.hand.map((c, i) => mask[i] ? i : -1).filter(i => i >= 0);
+  let playIdx = validIndices.length > 0 ? aiChooseCardIndex(playerIdx, validIndices, difficulty) : -1;
 
   if (playIdx >= 0) {
     const card = player.hand.splice(playIdx, 1)[0];
     const result = applyCard(card, playerIdx);
     if (result.needsTarget) {
-      const targets = G.players.map((_, i) => i).filter(i => i !== playerIdx);
-      const t = targets[Math.floor(Math.random() * targets.length)];
+      const t = difficulty === 'facil' ? aiRandomOpponent(playerIdx) : aiPickTarget(playerIdx);
       resolveTarget(result.needsTarget, playerIdx, t);
     } else if (result.needsNotePasoChoice) {
       const options = result.noteOptions || [];

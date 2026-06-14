@@ -19,38 +19,46 @@ const NOTE_LABELS = {
 
 const SPECIAL_DEFS = [
   { id: 'roba_show',    name: 'Roba el Show',          icon: '', cssClass: 'roba_show',    desc: 'Elige un jugador. Ese jugador roba 1 carta del mazo.',                                          effect: 'robaShow',    targetPlayer: true  },
-  { id: 'silencio',     name: 'Silencio de Negra',      icon: '', cssClass: 'silencio',     desc: 'Pasa tu turno sin jugar ninguna carta. La secuencia contina.',                               effect: 'silencio',    targetPlayer: false },
+  { id: 'silencio',     name: 'Silencio de Negra',      icon: '', cssClass: 'silencio',     desc: 'Pasa tu turno sin jugar ninguna carta. La secuencia continúa.',                               effect: 'silencio',    targetPlayer: false },
   { id: 'nota_fantasma',name: 'Nota Fantasma',          icon: '', cssClass: 'nota_fantasma',desc: 'El siguiente jugador pierde su turno.',                                                        effect: 'fantasma',    targetPlayer: false },
-  { id: 'improvisacion',name: 'Improvisacin',          icon: '', cssClass: 'improvisacion',desc: 'Juega cualquier carta de nota de tu mano, ignorando el orden musical.',                       effect: 'improvisacion',targetPlayer: false, needsNoteFollow: true },
-  { id: 'ensayo',       name: 'Ensayo Sorpresa',        icon: '!', cssClass: 'ensayo',       desc: 'El jugador que elijas debe robar 2 cartas.',                                                   effect: 'ensayo',      targetPlayer: true  },
-  { id: 'partitura',    name: 'Partitura',              icon: '', cssClass: 'partitura',    desc: 'Todos los dems jugadores roban cartas hasta tener 7. T mantienes tu mano.',                effect: 'partitura',   targetPlayer: false, removeAfterPlay: true },
-  { id: 'nota_paso',    name: 'Nota de Paso',           icon: '', cssClass: 'nota_paso',    desc: 'sala como nota anterior o posterior vlida (no como la misma nota).',                        effect: 'notaPaso',    targetPlayer: false },
-  { id: 'rotacion',     name: 'Rotacin de Orquesta',  icon: '', cssClass: 'rotacion',     desc: 'Todos los jugadores pasan su mano al jugador de al lado.',                                    effect: 'rotacion',    targetPlayer: false },
+  { id: 'improvisacion',name: 'Improvisación',          icon: '', cssClass: 'improvisacion',desc: 'Juega cualquier carta de nota de tu mano, ignorando el orden musical.',                       effect: 'improvisacion',targetPlayer: false, needsNoteFollow: true },
+  { id: 'ensayo',       name: 'Ensayo Sorpresa',        icon: '', cssClass: 'ensayo',       desc: 'El jugador que elijas debe robar 2 cartas.',                                                   effect: 'ensayo',      targetPlayer: true  },
+  { id: 'partitura',    name: 'Partitura',              icon: '', cssClass: 'partitura',    desc: 'Todos los demás jugadores roban cartas hasta tener 7. Tú mantienes tu mano.',                effect: 'partitura',   targetPlayer: false, removeAfterPlay: true },
+  { id: 'nota_paso',    name: 'Nota de Paso',           icon: '', cssClass: 'nota_paso',    desc: 'Úsala como nota anterior o posterior válida (no como la misma nota).',                        effect: 'notaPaso',    targetPlayer: false },
+  { id: 'rotacion',     name: 'Rotación de Orquesta',   icon: '', cssClass: 'rotacion',     desc: 'Todos los jugadores pasan su mano al jugador de al lado.',                                    effect: 'rotacion',    targetPlayer: false },
   { id: 'cambio_notas', name: 'Cambio de Notas',        icon: '', cssClass: 'cambio_notas', desc: 'Cambia toda tu mano con la de otro jugador.',                                                  effect: 'cambioNotas', targetPlayer: true  },
-  { id: 'barra_rep',    name: 'Barra de Repeticin',   icon: '', cssClass: 'barra_rep',    desc: 'El jugador anterior debe volver a jugar una carta.',                                           effect: 'barraRep',    targetPlayer: false },
-  { id: 'cambio_dir',   name: 'Cambio de Direccin',   icon: '', cssClass: 'cambio_dir',   desc: 'Cambia el sentido del turno (horario  antihorario).',                                        effect: 'cambioDir',   targetPlayer: false },
-  { id: 'desafinacion', name: 'Desafinacin',           icon: '', cssClass: 'desafinacion', desc: 'Jugala durante el turno de otro jugador. Cancela su carta y ese jugador pierde el turno.',  effect: 'desafinacion',targetPlayer: false, reactive: true },
+  { id: 'barra_rep',    name: 'Barra de Repetición',    icon: '', cssClass: 'barra_rep',    desc: 'El jugador anterior debe volver a jugar una carta.',                                           effect: 'barraRep',    targetPlayer: false },
+  { id: 'cambio_dir',   name: 'Cambio de Dirección',    icon: '', cssClass: 'cambio_dir',   desc: 'Cambia el sentido del turno (horario ↔ antihorario).',                                        effect: 'cambioDir',   targetPlayer: false },
+  { id: 'desafinacion', name: 'Desafinación',           icon: '', cssClass: 'desafinacion', desc: 'El siguiente jugador roba 1 carta y pierde su turno.',                                         effect: 'desafinacion',targetPlayer: false },
 ];
 
 const ALTERATION_DEFS = [
-  { id: 'sostenido', name: 'Sostenido ', icon: '', cssClass: 'sostenido', desc: 'El siguiente jugador debe continuar en sentido ascendente. No puede jugarse sobre MI ni SI.',  effect: 'sostenido', forbidden: ['MI','SI'] },
-  { id: 'bemol',     name: 'Bemol ',     icon: '', cssClass: 'bemol',     desc: 'El siguiente jugador debe continuar en sentido descendente. No puede jugarse sobre FA ni DO.', effect: 'bemol',     forbidden: ['FA','DO'] },
-  { id: 'becuadro',  name: 'Becuadro ',  icon: '', cssClass: 'becuadro',  desc: 'Cancela sostenido o bemol activo. Solo se puede usar si hay una alteracin activa.',           effect: 'becuadro',  forbidden: [] },
+  { id: 'sostenido', name: 'Sostenido ♯', icon: '', cssClass: 'sostenido', desc: 'El siguiente jugador debe continuar en sentido ascendente. No puede jugarse sobre MI ni SI.',  effect: 'sostenido', forbidden: ['MI','SI'] },
+  { id: 'bemol',     name: 'Bemol ♭',     icon: '', cssClass: 'bemol',     desc: 'El siguiente jugador debe continuar en sentido descendente. No puede jugarse sobre FA ni DO.', effect: 'bemol',     forbidden: ['FA','DO'] },
+  { id: 'becuadro',  name: 'Becuadro ♮',  icon: '', cssClass: 'becuadro',  desc: 'Cancela sostenido o bemol activo. Solo se puede usar si hay una alteración activa.',           effect: 'becuadro',  forbidden: [] },
 ];
 
-function buildDeck() {
+/**
+ * Construye el mazo. Sin argumentos devuelve el mazo completo
+ * (compatibilidad con el modo online). En local se puede pasar
+ * { specials: false } para una partida solo de notas (modo principiante).
+ */
+function buildDeck(opts) {
+  const includeSpecials = !opts || opts.specials !== false;
   const deck = [];
   NOTES.forEach(note => {
     for (let i = 0; i < 8; i++) {
       deck.push({ uid: `note_${note}_${i}`, type: 'note', note, color: NOTE_COLORS[note], label: NOTE_LABELS[note] });
     }
   });
-  SPECIAL_DEFS.forEach(def => {
-    for (let i = 0; i < 2; i++) deck.push({ uid: `${def.id}_${i}`, type: 'special', ...def });
-  });
-  ALTERATION_DEFS.forEach(def => {
-    for (let i = 0; i < 2; i++) deck.push({ uid: `${def.id}_${i}`, type: 'alt', ...def });
-  });
+  if (includeSpecials) {
+    SPECIAL_DEFS.forEach(def => {
+      for (let i = 0; i < 2; i++) deck.push({ uid: `${def.id}_${i}`, type: 'special', ...def });
+    });
+    ALTERATION_DEFS.forEach(def => {
+      for (let i = 0; i < 2; i++) deck.push({ uid: `${def.id}_${i}`, type: 'alt', ...def });
+    });
+  }
   return shuffle(deck);
 }
 

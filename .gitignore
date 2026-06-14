@@ -1,0 +1,7 @@
+# Artefactos locales de desarrollo (servidor de previsualización, etc.)
+.claude/
+
+# Archivos del sistema operativo
+.DS_Store
+Thumbs.db
+desktop.ini

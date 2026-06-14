@@ -1,0 +1,43 @@
+// ================================================================
+// MUSICALA – Firestore Security Rules
+// Pega estas reglas en Firebase Console > Firestore > Rules y publica.
+// ----------------------------------------------------------------
+// Nota: el lenguaje de reglas de Firestore NO admite funciones
+// flecha (p => p.uid) ni .map() con lambda. Por eso esta versión
+// usa solo comprobaciones simples y compila sin errores.
+//
+// Modelo de seguridad: requiere que el usuario haya iniciado sesión
+// (Google). Como el juego es de confianza entre amigos / aula y toda
+// la lógica corre en el cliente, basta con exigir autenticación.
+// Esto permite que las cartas que tocan la mano de OTROS jugadores
+// (Partitura, Rotación de Orquesta, Cambio de Notas, Ensayo Sorpresa,
+// Roba el Show) puedan sincronizar correctamente.
+// ================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Salas ─────────────────────────────────────────────────────
+    match /rooms/{roomCode} {
+
+      // Leer la sala: cualquier usuario autenticado.
+      allow read: if request.auth != null;
+
+      // Crear sala: el hostUid debe ser el tuyo.
+      allow create: if request.auth != null
+                    && request.resource.data.hostUid == request.auth.uid;
+
+      // Unirse / iniciar partida / actualizar estado / abandonar:
+      // cualquier jugador autenticado de la sala.
+      allow update, delete: if request.auth != null;
+
+      // ── Manos (sub-colección) ──────────────────────────────────
+      // Lectura/escritura para cualquier usuario autenticado, necesario
+      // para las cartas que modifican la mano de otros jugadores.
+      match /hands/{playerUid} {
+        allow read, write: if request.auth != null;
+      }
+    }
+  }
+}

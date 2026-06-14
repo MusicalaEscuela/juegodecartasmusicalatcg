@@ -80,17 +80,68 @@ function showPassScreen(nextPlayerName, callback) {
   const el = document.getElementById('pass-screen-overlay');
   if (!el) return callback();
   document.getElementById('pass-screen-name').textContent = nextPlayerName;
+
+  // Instrucción más clara y explícita.
+  const instr = document.getElementById('pass-screen-instruction');
+  if (instr) {
+    instr.innerHTML = `Entrega el dispositivo a <strong>${escHtml(nextPlayerName)}</strong>.<br>
+      Cuando nadie más vea tu mano, presiona «Estoy listo».`;
+  }
   el.style.display = 'flex';
+  // Enfocar el botón para permitir continuar con Enter.
+  const btn = document.getElementById('btn-pass-ready');
+  if (btn) setTimeout(() => btn.focus(), 50);
 }
 
 function dismissPassScreen() {
   const el = document.getElementById('pass-screen-overlay');
-  if (el) el.style.display = 'none';
-  if (typeof _passScreenCallback === 'function') {
-    const cb = _passScreenCallback;
-    _passScreenCallback = null;
-    cb();
+  const proceed = () => {
+    if (el) el.style.display = 'none';
+    if (typeof _passScreenCallback === 'function') {
+      const cb = _passScreenCallback;
+      _passScreenCallback = null;
+      cb();
+    }
+  };
+
+  // Cuenta regresiva opcional de 3 segundos antes de revelar la mano.
+  const wantCountdown = window.MSettings && MSettings.get('passCountdown');
+  if (wantCountdown) {
+    runPassCountdown(3, proceed);
+  } else {
+    proceed();
   }
+}
+
+function runPassCountdown(seconds, onDone) {
+  const content = document.querySelector('.pass-screen-content');
+  if (!content) return onDone();
+  let n = seconds;
+  // Overlay de cuenta regresiva reusable.
+  let cd = document.getElementById('pass-countdown');
+  if (!cd) {
+    cd = document.createElement('div');
+    cd.id = 'pass-countdown';
+    cd.className = 'pass-countdown';
+    document.getElementById('pass-screen-overlay').appendChild(cd);
+  }
+  content.style.visibility = 'hidden';
+  cd.style.display = 'flex';
+  const tick = () => {
+    cd.textContent = n > 0 ? n : '¡Ya!';
+    cd.classList.remove('pulse'); void cd.offsetWidth; cd.classList.add('pulse');
+    if (n <= 0) {
+      setTimeout(() => {
+        cd.style.display = 'none';
+        content.style.visibility = 'visible';
+        onDone();
+      }, 450);
+      return;
+    }
+    n--;
+    setTimeout(tick, 800);
+  };
+  tick();
 }
 
 // ── Setup UI ──────────────────────────────────────────────────────────────────
@@ -135,6 +186,60 @@ function renderSetup() {
   warn.textContent = humanCount > 1
     ? `✅ Modo multijugador local activado (${humanCount} humanos). El dispositivo pasará de mano en mano.`
     : '';
+
+  renderSetupOptions();
+}
+
+// ── Opciones avanzadas de partida (persistentes) ──────────────────────────────
+
+function _optSeg(key, current, options, setter) {
+  const fn = setter || 'setSetupOption';
+  return `<div class="opt-seg" role="group">` + options.map(o => {
+    const val = typeof o.val === 'string' ? `'${o.val}'` : o.val;
+    const active = o.val === current ? ' active' : '';
+    return `<button type="button" class="opt-seg-btn${active}"
+      aria-pressed="${o.val === current}"
+      onclick="${fn}('${key}', ${val})">${o.label}</button>`;
+  }).join('') + `</div>`;
+}
+
+function renderSetupOptions() {
+  const host = document.getElementById('setup-options');
+  if (!host || !window.MSettings) return;
+  const S = MSettings.get();
+  const yn = [{ val: true, label: 'Sí' }, { val: false, label: 'No' }];
+
+  const row = (icon, title, hint, control) => `
+    <div class="opt-row">
+      <div class="opt-label">${icon} ${title}<span class="opt-hint">${hint}</span></div>
+      ${control}
+    </div>`;
+
+  host.innerHTML = `
+    <h2 class="section-label">Opciones de partida</h2>
+    <div class="opt-grid">
+      ${row('🤖', 'Dificultad CPU', 'Cómo juega la máquina',
+        _optSeg('difficulty', S.difficulty, [
+          { val: 'facil', label: 'Fácil' }, { val: 'media', label: 'Media' }, { val: 'dificil', label: 'Difícil' }]))}
+      ${row('🃏', 'Cartas iniciales', 'Por jugador',
+        _optSeg('initialCards', S.initialCards, [{ val: 5, label: '5' }, { val: 7, label: '7' }, { val: 9, label: '9' }]))}
+      ${row('⭐', 'Cartas especiales', 'Efectos y alteraciones', _optSeg('specialsEnabled', S.specialsEnabled, yn))}
+      ${row('🎼', 'Escalas', 'Jugar 3+ notas seguidas', _optSeg('scalesEnabled', S.scalesEnabled, yn))}
+      ${row('⚡', 'Velocidad', 'Animaciones',
+        _optSeg('animSpeed', S.animSpeed, [
+          { val: 'lenta', label: 'Lenta' }, { val: 'normal', label: 'Normal' }, { val: 'rapida', label: 'Rápida' }]))}
+      ${row('🔒', 'Pasar dispositivo', 'Privacidad multijugador local', _optSeg('privacyScreen', S.privacyScreen, yn))}
+      ${row('⏱️', 'Cuenta regresiva', '3 s antes de mostrar la mano', _optSeg('passCountdown', S.passCountdown, yn))}
+      ${row('🔊', 'Sonido', 'Efectos del juego', _optSeg('soundEnabled', S.soundEnabled, yn))}
+    </div>
+  `;
+}
+
+function setSetupOption(key, value) {
+  if (!window.MSettings) return;
+  MSettings.set(key, value);
+  renderSetupOptions();
+  if (key === 'soundEnabled' && value === true && window.MSfx) MSfx.play('select');
 }
 
 function setPlayerType(idx, isHuman) { setupPlayers[idx].isHuman = isHuman; renderSetup(); }
@@ -158,18 +263,43 @@ function renderGame() {
   updateHelpTip();
 }
 
+const DIFFICULTY_LABELS = {
+  facil:   '🟢 Fácil',
+  media:   '🟡 Media',
+  dificil: '🔴 Difícil',
+};
+
 function renderHeader() {
   const chipTurn   = document.getElementById('chip-turn');
   const chipDir    = document.getElementById('chip-direction');
   const chipDeck   = document.getElementById('chip-deck');
   const chipOnline = document.getElementById('chip-online');
+  const chipDiff   = document.getElementById('chip-difficulty');
   const cur        = G.players[G.currentPlayer];
   const isMyTurn   = G._onlineMode ? isMyOnlineTurn() : isHumanTurn();
 
-  chipTurn.textContent = isMyTurn ? `¡Turno de ${cur.name}!` : `Turno: ${cur.name}`;
+  // Turno más explícito: distingue "es tu turno" de "espera a la CPU / a otro".
+  if (isMyTurn) {
+    chipTurn.textContent = `¡Es tu turno, ${cur.name}!`;
+  } else if (!cur.isHuman) {
+    chipTurn.textContent = `Esperando a ${cur.name}…`;
+  } else {
+    chipTurn.textContent = `Turno de ${cur.name}`;
+  }
   chipTurn.className   = 'status-chip' + (isMyTurn ? ' highlight' : (!cur.isHuman ? ' cpu-active' : ''));
   chipDir.textContent  = G.direction === 1 ? '⟳ Horario' : '⟲ Antihorario';
   chipDeck.textContent = `Mazo: ${G.deck.length}`;
+
+  // Dificultad: solo en local y solo si hay alguna CPU.
+  if (chipDiff) {
+    const hasCpu = !G._onlineMode && G.players.some(p => !p.isHuman);
+    if (hasCpu && G.difficulty) {
+      chipDiff.textContent = DIFFICULTY_LABELS[G.difficulty] || G.difficulty;
+      chipDiff.style.display = 'inline-flex';
+    } else {
+      chipDiff.style.display = 'none';
+    }
+  }
 
   if (chipOnline) chipOnline.style.display = G._onlineMode ? 'inline-flex' : 'none';
 }
@@ -231,20 +361,34 @@ function renderBoard() {
 
 const MAX_HISTORY_CHIPS = 8;
 
+function historyIcon(msg) {
+  const m = (msg || '').toLowerCase();
+  if (m.includes('gana')) return '🏆';
+  if (m.includes('roba')) return '🃏';
+  if (m.includes('escala')) return '🎼';
+  if (m.includes('sentido') || m.includes('direcci')) return '🔄';
+  if (m.includes('pierde') || m.includes('pasa su turno') || m.includes('salta')) return '🚫';
+  if (m.includes('improvisa')) return '🎹';
+  if (m.includes('intercambian') || m.includes('rotaci')) return '🔀';
+  if (m.includes('desafinaci')) return '🎺';
+  if (m.includes('jug')) return '🎵';
+  return '▶️';
+}
+
 function renderHistory() {
   const strip = document.getElementById('history-entries');
   if (!strip || !G) return;
 
-  const recentLog = G.log.slice(0, 4);
+  const latest = G.log[0] ? (typeof G.log[0] === 'string' ? G.log[0] : G.log[0].msg) : '';
   const chipsHtml = (G.noteHistory || []).slice(-MAX_HISTORY_CHIPS).map(note =>
     `<span class="seq-chip-inline" style="background:${NOTE_COLORS[note] || '#555'}">${note}</span>`
   ).join('');
 
-  const logText = recentLog.length > 0
-    ? `<span class="history-entry">${escHtml(typeof recentLog[0] === 'string' ? recentLog[0] : recentLog[0].msg)}</span>`
+  const latestHtml = latest
+    ? `<span class="history-latest"><span class="history-latest-icon">${historyIcon(latest)}</span>${escHtml(latest)}</span>`
     : '';
 
-  strip.innerHTML = chipsHtml + (chipsHtml && logText ? '<span style="color:var(--text-dim);font-size:11px;margin:0 4px">·</span>' : '') + logText;
+  strip.innerHTML = latestHtml + (chipsHtml ? `<span class="history-chips">${chipsHtml}</span>` : '');
 }
 
 // ── Hand render ───────────────────────────────────────────────────────────────
@@ -269,14 +413,22 @@ function renderHand() {
   btnMusicala.style.display = 'none';
 
   if (G.phase === 'improvisacion' && isMy) {
-    hint.textContent = 'Selecciona una carta de NOTA para improvisar.';
+    hint.textContent = '🎹 Improvisación: selecciona una carta de NOTA para jugarla.';
+    hint.classList.remove('hint-warn');
   } else if (isMy) {
     const hasValid = mask.some(v => v);
-    hint.textContent = hasValid
-      ? 'Toca para seleccionar. Vuelve a tocar para jugar. Para escala: selecciona 3+ y pulsa Jugar escala.'
-      : 'No tienes carta válida. Roba del mazo.';
+    if (hasValid) {
+      hint.textContent = G.scalesEnabled !== false
+        ? 'Toca una carta para jugarla. Para una escala: selecciona 3+ notas seguidas y pulsa «Jugar escala».'
+        : 'Toca una carta para seleccionarla y vuelve a tocarla para jugarla.';
+      hint.classList.remove('hint-warn');
+    } else {
+      hint.textContent = '🚫 No tienes carta válida. Toca el mazo iluminado para robar una carta.';
+      hint.classList.add('hint-warn');
+    }
   } else {
     hint.textContent = `Esperando a ${G.players[G.currentPlayer].name}…`;
+    hint.classList.remove('hint-warn');
   }
 
   container.innerHTML = '';
@@ -284,6 +436,20 @@ function renderHand() {
     const el = buildCardElement(card, idx, isMy, mask);
     container.appendChild(el);
   });
+}
+
+// Anima la última carta de la mano (la recién robada) con un suave "entrar".
+function animateDrawnCard() {
+  const container = document.getElementById('hand-cards');
+  if (!container) return;
+  const last = container.lastElementChild;
+  if (!last) return;
+  last.classList.remove('card-drawn');
+  void last.offsetWidth;
+  last.classList.add('card-drawn');
+  last.addEventListener('animationend', () => last.classList.remove('card-drawn'), { once: true });
+  // Desplazar para que la carta robada quede visible.
+  try { last.scrollIntoView({ behavior: 'smooth', inline: 'end', block: 'nearest' }); } catch (e) {}
 }
 
 // ── Card element builder ──────────────────────────────────────────────────────
@@ -319,10 +485,25 @@ function buildCardElement(card, idx, interactive, mask) {
   const subLabel  = card.type === 'note' ? (card.label || '') : (card.name || '');
   const imgSrc    = getCardImageSrc(card);
   const typeIcon  = card.type === 'note' ? '♩' : (card.type === 'alt' ? '♯' : '★');
+  const typeWord  = card.type === 'note' ? 'Nota' : (card.type === 'alt' ? 'Alteración' : 'Carta especial');
+  const altText   = card.type === 'note' ? `Carta de nota ${card.note}` : `${typeWord}: ${subLabel}`;
+
+  // Indicador de validez NO basado solo en color (accesibilidad).
+  let validBadge = '';
+  if (interactive) {
+    validBadge = valid
+      ? `<span class="card-valid-badge ok" aria-hidden="true">✓</span>`
+      : `<span class="card-valid-badge no" aria-hidden="true">✕</span>`;
+  }
+
+  // Botón de información (ⓘ): tooltip/zoom contextual sin interferir con el tap-para-jugar.
+  const infoBtn = `<button class="card-info-btn" type="button" tabindex="-1" aria-label="Ver información de ${escHtml(subLabel || noteLabel)}">i</button>`;
 
   el.innerHTML = `
     <div class="card-inner">
       <div class="card-front">
+        ${validBadge}
+        ${infoBtn}
         <div class="card-header">
           <span class="card-note-label">${escHtml(noteLabel)}</span>
           <span class="card-type-icon">${typeIcon}</span>
@@ -330,7 +511,7 @@ function buildCardElement(card, idx, interactive, mask) {
         <div class="card-img-area">
           ${imgSrc
             ? `<img class="card-face-img" src="${imgSrc}"
-                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="${escHtml(subLabel)}">
+                 onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="${escHtml(altText)}">
                <div class="card-icon-big" style="display:none">${escHtml(noteLabel)}</div>`
             : `<div class="card-icon-big">${escHtml(noteLabel)}</div>`
           }
@@ -346,19 +527,49 @@ function buildCardElement(card, idx, interactive, mask) {
     </div>
   `;
 
+  // Accesibilidad: cada carta es un botón navegable con teclado.
+  if (interactive) {
+    el.setAttribute('role', 'button');
+    el.setAttribute('tabindex', '0');
+    el.setAttribute('aria-label',
+      `${altText}. ${valid ? 'Jugable' : 'No jugable ahora'}.`);
+  }
+
+  // El botón de info abre el detalle de la carta (no juega la carta).
+  const info = el.querySelector('.card-info-btn');
+  if (info) {
+    info.addEventListener('click', (e) => {
+      e.stopPropagation();
+      openCardInfo(card, interactive ? valid : null);
+    });
+  }
+
   if (interactive) {
     el.addEventListener('click', (e) => {
       e.stopPropagation();
       if (valid) {
-        // ── Carta válida: jugar directamente, sin pasar por el menú ──
         handleCardClick(idx);
       } else {
+        if (window.MSfx) MSfx.play('error');
         showToast('Esa carta no es válida ahora.');
+      }
+    });
+    // Teclado: Enter / Espacio juega o selecciona la carta.
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        if (valid) handleCardClick(idx);
+        else { if (window.MSfx) MSfx.play('error'); showToast('Esa carta no es válida ahora.'); }
       }
     });
   }
 
   return el;
+}
+
+// Tooltip/detalle contextual de una carta (reusa el zoom). playable: true/false/null.
+function openCardInfo(card, playable) {
+  openCardZoom(card, playable);
 }
 
 // ── Card interaction ──────────────────────────────────────────────────────────
@@ -405,34 +616,82 @@ function handleCardClick(idx) {
       return;
     }
     G.selectedCards.push(idx);
+    if (window.MSfx) MSfx.play('select');
     renderHand(); updateScaleButton();
   }
 }
 
 function updateScaleButton() {
-  const btn = document.getElementById('btn-play-scale');
+  const btn     = document.getElementById('btn-play-scale');
+  const preview = document.getElementById('scale-preview');
+  const hidePreview = () => { if (preview) { preview.style.display = 'none'; preview.className = 'scale-preview'; } };
+
   const isMy = G && (G._onlineMode ? isMyOnlineTurn() : isHumanTurn());
-  if (!btn || !G || !isMy || G.phase === 'improvisacion') { if (btn) btn.style.display = 'none'; return; }
+  const scalesOff = G && G.scalesEnabled === false;   // online deja undefined → permitido
+  if (!btn || !G || !isMy || G.phase === 'improvisacion' || scalesOff) {
+    if (btn) btn.style.display = 'none';
+    hidePreview();
+    return;
+  }
+
   const hand = G._onlineMode ? ON.myHand : G.players[humanIndex()].hand;
-  const sel  = G.selectedCards;
-  if (sel.length >= 3) {
-    const v = getScaleValidation(sel, hand, G.currentNote, G.forcedDir);
-    if (v.valid) {
-      btn.style.display = 'inline-block';
-      const dirLabel = v.dir === 'asc' ? '↑' : (v.dir === 'desc' ? '↓' : '↕');
-      btn.textContent   = `🎵 Escala ${dirLabel} (${sel.length} notas)`;
-      btn.classList.add('active-scale');
-      return;
+  const sel  = G.selectedCards || [];
+  const selNotes = sel.map(i => hand[i] && hand[i].note).filter(Boolean);
+
+  // Sin selección o selección no-nota → sin preview ni botón.
+  if (sel.length === 0 || selNotes.length !== sel.length) {
+    btn.style.display = 'none';
+    btn.classList.remove('active-scale');
+    hidePreview();
+    return;
+  }
+
+  if (sel.length < 3) {
+    // 1-2 notas seleccionadas: guiar hacia la escala.
+    btn.style.display = 'none';
+    btn.classList.remove('active-scale');
+    if (preview) {
+      preview.style.display = 'block';
+      preview.className = 'scale-preview info';
+      const faltan = 3 - sel.length;
+      preview.innerHTML = `Seleccionadas: <strong>${selNotes.join(' → ')}</strong> · elige ${faltan} nota${faltan !== 1 ? 's' : ''} más para una escala.`;
+    }
+    return;
+  }
+
+  const v = getScaleValidation(sel, hand, G.currentNote, G.forcedDir);
+  if (v.valid) {
+    btn.style.display = 'inline-block';
+    const dirLabel = v.dir === 'asc' ? '↑' : (v.dir === 'desc' ? '↓' : '↕');
+    btn.textContent = `🎵 Jugar escala ${dirLabel} (${sel.length})`;
+    btn.classList.add('active-scale');
+    if (preview) {
+      preview.style.display = 'block';
+      preview.className = 'scale-preview ok';
+      preview.innerHTML = `Escala seleccionada: <strong>${(v.playOrder || selNotes).join(' → ')}</strong> ✓`;
+    }
+  } else {
+    btn.style.display = 'none';
+    btn.classList.remove('active-scale');
+    if (preview) {
+      preview.style.display = 'block';
+      preview.className = 'scale-preview bad';
+      preview.innerHTML = `Esta escala no es válida. Deben ser <strong>notas consecutivas</strong> (ej.: FA → SOL → LA).`;
     }
   }
-  btn.style.display = 'none';
-  btn.classList.remove('active-scale');
 }
 
 function handlePostPlay(result) {
   if (result.pendingOnlinePush) {
     renderGame();
     return;
+  }
+
+  // Feedback sonoro según el tipo de jugada.
+  if (window.MSfx && G.winner === null) {
+    if (result.scalePlayOrder && result.scalePlayOrder.length) MSfx.play('scale', result.scalePlayOrder);
+    else if (result.needsTarget || result.needsNotePasoChoice || result.phase === 'improvisacion') MSfx.play('special');
+    else MSfx.play('play');
   }
 
   const continueTurnFlow = () => {
@@ -521,7 +780,15 @@ function renderActionBar() {
   const hand     = G._onlineMode ? ON.myHand : (isMy ? G.players[humanIndex()].hand : []);
   const mask     = isMy ? getValidMask(hand, G.currentNote, G.forcedDir) : [];
   const hasValid = mask.some(v => v);
-  btnDraw.disabled = !isMy || hasValid || G.phase === 'improvisacion' || !!G.winner;
+  if (btnDraw) btnDraw.disabled = !isMy || hasValid || G.phase === 'improvisacion' || !!G.winner;
+
+  // Resaltar el mazo cuando es mi turno y NO tengo carta válida (debo robar).
+  const deckPile = document.getElementById('deck-pile');
+  if (deckPile) {
+    const mustDraw = isMy && !hasValid && G.phase !== 'improvisacion' && !G.winner;
+    deckPile.classList.toggle('must-draw', mustDraw);
+  }
+
   updateScaleButton();
 }
 
@@ -544,18 +811,46 @@ function showFullHistory() {
 
 // ── Winner screen ─────────────────────────────────────────────────────────────
 
+const WINNER_CHEERS = [
+  '¡Afinadito quedaste, primer lugar! 🎵',
+  '¡Sonaste como toda una orquesta! 🎻',
+  '¡Esa mano fue pura armonía! 🎹',
+  '¡Cerraste con broche de oro! 🏆',
+];
+
 function showWinnerScreen() {
   const winner = G.players[G.winner];
   document.getElementById('winner-title').textContent = `¡${winner.name} gana! 🎵`;
-  document.getElementById('winner-sub').textContent   = winner.isHuman
-    ? '¡Primer músico en quedarse sin cartas!'
-    : `${winner.name} se quedó sin cartas primero.`;
+  document.getElementById('winner-sub').textContent = winner.isHuman
+    ? WINNER_CHEERS[Math.floor(Math.random() * WINNER_CHEERS.length)]
+    : `${winner.name} se quedó sin cartas primero. ¡A la revancha!`;
+
   const sorted = [...G.players].sort((a, b) => a.hand.length - b.hand.length);
+  const totalScales   = G.players.reduce((s, p) => s + (p.scalesPlayed || 0), 0);
+  const totalSpecials = G.players.reduce((s, p) => s + (p.specialsUsed || 0), 0);
+
+  const playerRows = sorted.map(p => {
+    const extra = [];
+    if (p.scalesPlayed)  extra.push(`${p.scalesPlayed} escala${p.scalesPlayed !== 1 ? 's' : ''}`);
+    if (p.specialsUsed)  extra.push(`${p.specialsUsed} especial${p.specialsUsed !== 1 ? 'es' : ''}`);
+    const detail = extra.length ? `<span class="stat-detail">${extra.join(' · ')}</span>` : '';
+    const crown  = p === winner ? '👑 ' : '';
+    return `<div class="stat-row">
+        <span>${crown}${escHtml(p.name)}</span>
+        <strong>${p.hand.length} carta${p.hand.length !== 1 ? 's' : ''}${detail}</strong>
+      </div>`;
+  }).join('');
+
   document.getElementById('winner-stats').innerHTML = `
-    <div class="stat-row"><span>Ganador</span><strong>${escHtml(winner.name)}</strong></div>
-    <div class="stat-row"><span>Turnos</span><strong>${G.turnCount}</strong></div>
-    ${sorted.map(p => `<div class="stat-row"><span>${escHtml(p.name)}</span><strong>${p.hand.length} cartas restantes</strong></div>`).join('')}
+    <div class="stat-row"><span>🎯 Turnos jugados</span><strong>${G.turnCount}</strong></div>
+    <div class="stat-row"><span>🎼 Escalas jugadas</span><strong>${totalScales}</strong></div>
+    <div class="stat-row"><span>⭐ Especiales usadas</span><strong>${totalSpecials}</strong></div>
+    <div class="stat-divider"></div>
+    <div class="stat-section-label">Cartas restantes</div>
+    ${playerRows}
   `;
+
+  if (window.MSfx) MSfx.play('win');
   spawnConfetti();
   showScreen('screen-winner');
 }
@@ -616,8 +911,9 @@ function scheduleNextTurn() {
     const cur          = G.players[G.currentPlayer];
     const prevHuman    = G.players.find((p, i) => p.isHuman && i !== G.currentPlayer);
     const isMultiHuman = G.players.filter(p => p.isHuman).length > 1;
+    const privacyOn    = !window.MSettings || MSettings.get('privacyScreen') !== false;
 
-    if (isMultiHuman && prevHuman) {
+    if (isMultiHuman && prevHuman && privacyOn) {
       showPassScreen(cur.name, () => { renderGame(); });
     } else {
       renderGame();
@@ -626,7 +922,8 @@ function scheduleNextTurn() {
   }
 
   if (aiTimer) clearTimeout(aiTimer);
-  aiTimer = setTimeout(() => runAIStep(), 900);
+  const factor = window.MSettings ? MSettings.speedFactor() : 1;
+  aiTimer = setTimeout(() => runAIStep(), Math.round(900 * factor));
 }
 
 function scheduleAI() { scheduleNextTurn(); }
@@ -648,21 +945,24 @@ function escHtml(str) {
 
 // ── Card Zoom ─────────────────────────────────────────────────────────────────
 
-function openCardZoom(card) {
+function openCardZoom(card, playable) {
   const overlay  = document.getElementById('card-zoom-overlay');
   const zoomImg  = document.getElementById('card-zoom-img');
   const zoomIcon = document.getElementById('card-zoom-icon');
   const zoomName = document.getElementById('card-zoom-name');
   const zoomType = document.getElementById('card-zoom-type');
   const zoomDesc = document.getElementById('card-zoom-desc');
+  const zoomPlay = document.getElementById('card-zoom-playable');
 
   const imgSrc  = getCardImageSrc(card);
   const typeMap = { note: 'Nota musical', alt: 'Alteración', special: 'Carta especial' };
   const label   = card.type === 'note' ? card.note : (card.name || card.label || '');
-  const desc    = card.desc || '';
+  const desc    = card.desc || (card.type === 'note'
+    ? `Juega ${card.note} sobre la misma nota, la anterior o la siguiente.` : '');
 
   if (imgSrc) {
     zoomImg.src = imgSrc;
+    zoomImg.alt = label;
     zoomImg.style.display = 'block';
     zoomIcon.style.display = 'none';
   } else {
@@ -674,6 +974,21 @@ function openCardZoom(card) {
   zoomName.textContent = label;
   zoomType.textContent = typeMap[card.type] || '';
   zoomDesc.textContent = desc;
+
+  // Estado "jugable ahora" (solo cuando se abre desde la mano en juego).
+  if (zoomPlay) {
+    if (playable === true) {
+      zoomPlay.textContent = '✓ Puedes jugarla ahora';
+      zoomPlay.className = 'card-zoom-playable yes';
+      zoomPlay.style.display = 'block';
+    } else if (playable === false) {
+      zoomPlay.textContent = '✕ No puedes jugarla en este momento';
+      zoomPlay.className = 'card-zoom-playable no';
+      zoomPlay.style.display = 'block';
+    } else {
+      zoomPlay.style.display = 'none';
+    }
+  }
 
   overlay.classList.add('open');
 }

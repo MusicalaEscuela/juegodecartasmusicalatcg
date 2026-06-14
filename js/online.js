@@ -45,11 +45,23 @@ function renderOnlineAuth() {
   if (!ON.user) {
     el.innerHTML = `
       <div class="online-login-box">
-        <p class="online-subtitle">Inicia sesin para jugar en lnea</p>
+        <p class="online-intro">Para jugar en línea necesitamos identificarte y guardar tu sala de juego. Así tus amigos pueden unirse con un código.</p>
+
+        <div class="online-flow">
+          <div class="online-flow-step"><span class="online-flow-num">1</span><span>Crea una sala</span></div>
+          <span class="online-flow-arrow">→</span>
+          <div class="online-flow-step"><span class="online-flow-num">2</span><span>Comparte el código</span></div>
+          <span class="online-flow-arrow">→</span>
+          <div class="online-flow-step"><span class="online-flow-num">3</span><span>Se unen</span></div>
+          <span class="online-flow-arrow">→</span>
+          <div class="online-flow-step"><span class="online-flow-num">4</span><span>¡A jugar!</span></div>
+        </div>
+
         <button class="btn-google" id="btn-google-login">
           <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.2l6.7-6.7C35.6 2.3 30.1 0 24 0 14.6 0 6.6 5.5 2.6 13.5l7.8 6C12.3 13.1 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v8.5h12.7c-.6 3-2.3 5.5-4.8 7.2l7.5 5.8C43.7 37.5 46.5 31.4 46.5 24.5z"/><path fill="#FBBC05" d="M10.4 28.5A14.5 14.5 0 0 1 9.5 24c0-1.6.3-3.1.8-4.5l-7.8-6A23.9 23.9 0 0 0 0 24c0 3.9.9 7.5 2.6 10.8l7.8-6.3z"/><path fill="#34A853" d="M24 48c6.1 0 11.3-2 15-5.4l-7.5-5.8c-2 1.4-4.6 2.2-7.5 2.2-6.3 0-11.6-4.2-13.5-9.9l-7.8 6.2C6.6 42.5 14.6 48 24 48z"/></svg>
           Continuar con Google
         </button>
+        <p class="online-note">Por ahora el acceso es solo con Google. ¿Prefieres no iniciar sesión? Puedes jugar el <strong>multijugador local</strong> pasando el dispositivo, sin cuenta.</p>
       </div>
     `;
     document.getElementById('btn-google-login').addEventListener('click', onlineLogin);
@@ -58,7 +70,7 @@ function renderOnlineAuth() {
       <div class="online-user-row">
         ${ON.user.photoURL ? `<img class="online-avatar" src="${ON.user.photoURL}" alt="">` : ''}
         <span class="online-username">${escHtml(ON.user.name)}</span>
-        <button class="btn-link-small" id="btn-online-logout">Cerrar sesin</button>
+        <button class="btn-link-small" id="btn-online-logout">Cerrar sesión</button>
       </div>
     `;
     document.getElementById('btn-online-logout').addEventListener('click', onlineLogout);
@@ -75,7 +87,7 @@ function renderLobbyActions() {
       <span class="lobby-or">o</span>
       <div class="join-row">
         <input class="join-input" id="join-code-input" type="text" maxlength="4"
-               placeholder="Cdigo" autocomplete="off" style="text-transform:uppercase">
+               placeholder="Código" autocomplete="off" style="text-transform:uppercase">
         <button class="btn-secondary" id="btn-join-room">Unirse</button>
       </div>
     </div>
@@ -107,7 +119,7 @@ async function handleCreateRoom() {
 async function handleJoinRoom() {
   const input = document.getElementById('join-code-input');
   const code  = (input?.value || '').trim().toUpperCase();
-  if (code.length !== 4) { showToast('Ingresa el cdigo de 4 letras.'); return; }
+  if (code.length !== 4) { showToast('Ingresa el código de 4 letras.'); return; }
   try {
     showOnlineSpinner(true);
     await joinRoom(code, ON.user.name);
@@ -165,7 +177,7 @@ function subscribeToRoom(code) {
     }
 
     if (room.status === 'ended') {
-      showToast('La partida termin.');
+      showToast('La partida terminó.');
     }
   });
 }
@@ -182,7 +194,7 @@ function renderLobbyScreen(room) {
     <div class="lobby-player-row ${p.uid === ON.user.uid ? 'me' : ''}">
       <span class="lobby-player-num">${i + 1}</span>
       <span class="lobby-player-name">${escHtml(p.name)}</span>
-      ${p.uid === room.hostUid ? '<span class="lobby-host-badge">Anfitrin</span>' : ''}
+      ${p.uid === room.hostUid ? '<span class="lobby-host-badge">Anfitrión</span>' : ''}
     </div>
   `).join('');
 
@@ -193,8 +205,8 @@ function renderLobbyScreen(room) {
     btnStart.style.display  = isHost ? 'block' : 'none';
     btnStart.disabled       = !canStart;
     btnStart.textContent    = canStart
-      ? `Empezar partida! (${room.players.length} jugadores)`
-      : `Esperando jugadores (${room.players.length}/2 mn.)`;
+      ? `¡Empezar partida! (${room.players.length} jugadores)`
+      : `Esperando jugadores (${room.players.length}/2 mín.)`;
   }
 }
 

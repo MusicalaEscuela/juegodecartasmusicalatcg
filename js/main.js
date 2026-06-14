@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-copy-code').addEventListener('click', () => {
     const code = document.getElementById('lobby-code-display').textContent;
-    navigator.clipboard.writeText(code).then(() => showToast(`Cdigo ${code} copiado `));
+    navigator.clipboard.writeText(code).then(() => showToast(`Código ${code} copiado ✅`));
   });
 
   //  Setup 
@@ -63,24 +63,10 @@ document.addEventListener('DOMContentLoaded', () => {
     startGame();
   });
 
-  //  Game actions 
-  document.getElementById('deck-pile').addEventListener('click', () => {
-    if (!G || G.winner) return;
-    const drawFn = G._onlineMode ? onlineHumanDraw : humanDraw;
-    const result = drawFn();
-    if (!result.ok) { if (result.error) showToast(result.error); return; }
-    renderGame();
-    if (!G._onlineMode && !isHumanTurn()) scheduleNextTurn();
-  });
-
-  document.getElementById('btn-draw').addEventListener('click', () => {
-    if (!G || G.winner) return;
-    const drawFn = G._onlineMode ? onlineHumanDraw : humanDraw;
-    const result = drawFn();
-    if (!result.ok) { if (result.error) showToast(result.error); return; }
-    renderGame();
-    if (!G._onlineMode && !isHumanTurn()) scheduleNextTurn();
-  });
+  //  Game actions
+  document.getElementById('deck-pile').addEventListener('click', handleDrawClick);
+  const _btnDraw = document.getElementById('btn-draw');
+  if (_btnDraw) _btnDraw.addEventListener('click', handleDrawClick);
 
   document.getElementById('btn-play-scale').addEventListener('click', () => {
     if (!G) return;
@@ -88,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isOnline ? !isMyOnlineTurn() : !isHumanTurn()) return;
     const scaleFn = isOnline ? onlineHumanPlayScale : humanPlayScale;
     const result  = scaleFn(G.selectedCards);
-    if (!result.ok) { showToast(result.error || 'Escala invlida.'); return; }
+    if (!result.ok) { showToast(result.error || 'Escala inválida.'); return; }
     handlePostPlay(result);
   });
 
@@ -96,8 +82,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-new-game').addEventListener('click', () => {
     showModal(`
-      <p class="modal-title">Nueva partida?</p>
-      <p class="modal-body">Se perder el progreso actual.</p>
+      <p class="modal-title">¿Nueva partida?</p>
+      <p class="modal-body">Se perderá el progreso actual.</p>
       <div class="modal-actions">
         <button class="modal-btn primary" onclick="closeModal(); startGame();">Reiniciar</button>
         <button class="modal-btn secondary" onclick="closeModal()">Cancelar</button>
@@ -109,10 +95,12 @@ document.addEventListener('DOMContentLoaded', () => {
     showModal(`
       <p class="modal-title">Opciones</p>
       <div class="modal-actions" style="flex-direction:column;gap:10px;">
-        <button class="modal-btn primary"   onclick="closeModal(); startGame();">Reiniciar partida</button>
-        <button class="modal-btn secondary" onclick="closeModal(); showFullHistory();"> Historial</button>
-        <button class="modal-btn secondary" onclick="closeModal(); showScreen('screen-setup'); renderSetup();">Cambiar jugadores</button>
-        <button class="modal-btn secondary" onclick="closeModal(); showRulesModal();">Ver reglas</button>
+        <button class="modal-btn primary"   onclick="closeModal(); startGame();">🔄 Reiniciar partida</button>
+        <button class="modal-btn secondary" onclick="closeModal(); showSettingsModal();">⚙️ Configuración</button>
+        <button class="modal-btn secondary" onclick="closeModal(); MTutorial && MTutorial.open(0);">📖 Ver tutorial</button>
+        <button class="modal-btn secondary" onclick="closeModal(); showFullHistory();">📋 Historial</button>
+        <button class="modal-btn secondary" onclick="closeModal(); showScreen('screen-setup'); renderSetup();">👥 Cambiar jugadores</button>
+        <button class="modal-btn secondary" onclick="closeModal(); showRulesModal();">📜 Ver reglas</button>
         <button class="modal-btn secondary" onclick="closeModal()">Cancelar</button>
       </div>
     `);
@@ -123,10 +111,15 @@ document.addEventListener('DOMContentLoaded', () => {
     dismissPassScreen();
   });
 
-  //  Winner screen 
+  //  Winner screen
   document.getElementById('btn-play-again').addEventListener('click', () => startGame());
   document.getElementById('btn-change-players').addEventListener('click', () => {
     showScreen('screen-setup'); renderSetup();
+  });
+  const _btnWinnerHome = document.getElementById('btn-winner-home');
+  if (_btnWinnerHome) _btnWinnerHome.addEventListener('click', () => {
+    if (aiTimer) clearTimeout(aiTimer);
+    showScreen('screen-intro');
   });
 
   //  Modal backdrop 
@@ -147,7 +140,33 @@ function startGame() {
   initGame(setupPlayers);
   showScreen('screen-game');
   renderGame();
+
+  // Tutorial automático la primera vez que se juega.
+  if (window.MTutorial && MTutorial.shouldAutoShow()) {
+    setTimeout(() => MTutorial.open(0), 350);
+  }
+
   if (!isHumanTurn()) scheduleNextTurn();
+}
+
+// Robar carta (mazo o botón). Sonido + mensaje claro + animación.
+function handleDrawClick() {
+  if (!G || G.winner) return;
+  const drawFn = G._onlineMode ? onlineHumanDraw : humanDraw;
+  const result = drawFn();
+  if (!result.ok) {
+    if (result.error) { showToast(result.error); if (window.MSfx) MSfx.play('error'); }
+    return;
+  }
+  if (window.MSfx) MSfx.play('draw');
+  renderGame();
+  animateDrawnCard();
+  if (result.drewPlayable) {
+    showToast('🃏 La carta robada es válida. ¡Puedes jugarla ahora!');
+  } else if (result.drew) {
+    showToast('La carta robada no se puede jugar. Pierdes el turno.');
+  }
+  if (!G._onlineMode && !isHumanTurn()) scheduleNextTurn();
 }
 
 //  Rules modal 
@@ -156,73 +175,160 @@ function showRulesModal() {
   showModal(`
     <p class="modal-title">Reglas de Musicala</p>
     <div class="modal-body rules-body">
-      <p><strong> Objetivo:</strong> S el primero en quedarte sin cartas.</p>
+      <p><strong>🎯 Objetivo:</strong> Sé el primero en quedarte sin cartas.</p>
 
-      <p><strong> En tu turno puedes jugar:</strong></p>
+      <p><strong>🎵 En tu turno puedes jugar:</strong></p>
       <ul>
         <li>La nota siguiente en la secuencia</li>
         <li>La nota anterior en la secuencia</li>
-        <li>La misma nota que est en juego</li>
-        <li>Una carta especial o de alteracin vlida</li>
+        <li>La misma nota que está en juego</li>
+        <li>Una carta especial o de alteración válida</li>
       </ul>
 
-      <p><strong> Escalas:</strong> Selecciona 3+ notas consecutivas y usa el botn "Escala" para jugarlas todas de un golpe.</p>
+      <p><strong>🎼 Escalas:</strong> Selecciona 3+ notas consecutivas y usa el botón «Jugar escala» para jugarlas todas de un golpe.</p>
 
-      <p><strong> Sin carta vlida:</strong> Roba una del mazo. Si es vlida, puedes jugarla; si no, pierdes el turno.</p>
+      <p><strong>🃏 Sin carta válida:</strong> Roba una del mazo. Si es válida, puedes jugarla; si no, pierdes el turno.</p>
 
-      <p><strong> Sostenido:</strong> Obliga al siguiente a subir. No sobre MI ni SI.</p>
-      <p><strong> Bemol:</strong> Obliga al siguiente a bajar. No sobre FA ni DO.</p>
-      <p><strong> Becuadro:</strong> Cancela la alteracin activa.</p>
+      <p><strong>♯ Sostenido:</strong> Obliga al siguiente a subir. No sobre MI ni SI.</p>
+      <p><strong>♭ Bemol:</strong> Obliga al siguiente a bajar. No sobre FA ni DO.</p>
+      <p><strong>♮ Becuadro:</strong> Cancela la alteración activa.</p>
 
-      <p><strong> Multijugador local:</strong> Cuando haya varios humanos, el juego pedir pasar el dispositivo entre cada turno para que nadie vea la mano del otro.</p>
+      <p><strong>⭐ Cartas especiales:</strong> Cambian el rumbo del juego (robar, cambiar dirección, intercambiar manos, improvisar…). Al jugarlas verás un mensaje con su efecto. Toca el botón <strong>ⓘ</strong> de cada carta para leer qué hace.</p>
+
+      <p><strong>🤝 Multijugador local:</strong> Cuando haya varios humanos, el juego pedirá pasar el dispositivo entre cada turno para que nadie vea la mano del otro.</p>
     </div>
     <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeModal(); if(window.MTutorial) MTutorial.open(0);">📖 Tutorial interactivo</button>
       <button class="modal-btn primary" onclick="closeModal()">Entendido</button>
     </div>
   `);
 }
 
-function showCardLibraryModal() {
-  const noteCards = NOTES.map(note => ({
-    title: `Nota ${note}`,
-    desc: 'Carta de nota',
-    src: `assets/cards/nota_${note.toLowerCase()}.png`,
-  }));
-  const specialCards = SPECIAL_DEFS.map(card => ({
-    title: card.name,
-    desc: card.desc || 'Carta especial',
-    src: `assets/cards/carta_${card.id}.png`,
-  }));
-  const altCards = ALTERATION_DEFS.map(card => ({
-    title: card.name,
-    desc: card.desc || 'Carta de alteracion',
-    src: `assets/cards/carta_${card.id}.png`,
-  }));
+// ── Biblioteca de cartas con filtros + buscador + zoom ────────────────────────
 
-  const renderSection = (title, cards) => `
-    <div style="margin-top:12px">
-      <p class="modal-title" style="font-size:16px;margin-bottom:8px">${title}</p>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:10px">
-        ${cards.map(c => `
-          <div style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:8px">
-            <img src="${c.src}" alt="${c.title}" style="width:100%;aspect-ratio:63/88;object-fit:contain;background:rgba(0,0,0,0.18);border-radius:8px;display:block">
-            <div style="margin-top:6px;font-size:11px;font-weight:800;color:#fff">${c.title}</div>
-            <div style="margin-top:2px;font-size:10px;color:rgba(255,255,255,0.65)">${c.desc}</div>
-          </div>
-        `).join('')}
+let _libState   = { filter: 'all', query: '' };
+let _libCurrent = [];
+
+function _libraryItems() {
+  const items = [];
+  NOTES.forEach(note => items.push({
+    type: 'note', note, id: `nota_${note.toLowerCase()}`,
+    color: NOTE_COLORS[note], label: NOTE_LABELS[note], name: `Nota ${note}`,
+    desc: `Nota musical ${note}. Se juega sobre la misma nota, la anterior o la siguiente de la escala.`,
+  }));
+  ALTERATION_DEFS.forEach(d => items.push({ ...d, type: 'alt' }));
+  SPECIAL_DEFS.forEach(d => items.push({ ...d, type: 'special' }));
+  return items;
+}
+
+function showCardLibraryModal() {
+  _libState = { filter: 'all', query: '' };
+  showModal(`
+    <p class="modal-title">📚 Biblioteca de cartas</p>
+    <div class="lib-controls">
+      <input id="lib-search" class="lib-search" type="text" placeholder="🔍 Buscar por nombre…" autocomplete="off" />
+      <div class="lib-filters" id="lib-filters">
+        <button type="button" class="lib-filter active" data-f="all">Todas</button>
+        <button type="button" class="lib-filter" data-f="note">Notas</button>
+        <button type="button" class="lib-filter" data-f="alt">Alteraciones</button>
+        <button type="button" class="lib-filter" data-f="special">Especiales</button>
       </div>
     </div>
-  `;
-
-  showModal(`
-    <p class="modal-title">Biblioteca de cartas</p>
-    <p class="modal-body">Explora las cartas y su arte completo antes de iniciar partida.</p>
-    ${renderSection('Notas', noteCards)}
-    ${renderSection('Alteraciones', altCards)}
-    ${renderSection('Especiales', specialCards)}
+    <div class="lib-grid" id="lib-grid"></div>
     <div class="modal-actions">
       <button class="modal-btn primary" onclick="closeModal()">Cerrar</button>
     </div>
   `);
+
+  const search = document.getElementById('lib-search');
+  if (search) search.addEventListener('input', () => {
+    _libState.query = search.value.toLowerCase().trim();
+    renderLibraryGrid();
+  });
+  document.querySelectorAll('#lib-filters .lib-filter').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('#lib-filters .lib-filter').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      _libState.filter = b.dataset.f;
+      renderLibraryGrid();
+    });
+  });
+  renderLibraryGrid();
+}
+
+function renderLibraryGrid() {
+  const grid = document.getElementById('lib-grid');
+  if (!grid) return;
+  const items = _libraryItems().filter(it => {
+    if (_libState.filter !== 'all' && it.type !== _libState.filter) return false;
+    if (_libState.query) {
+      const hay = `${it.name || ''} ${it.note || ''} ${it.desc || ''}`.toLowerCase();
+      if (!hay.includes(_libState.query)) return false;
+    }
+    return true;
+  });
+  _libCurrent = items;
+
+  if (items.length === 0) {
+    grid.innerHTML = `<p class="lib-empty">No se encontraron cartas para «${escHtml(_libState.query)}».</p>`;
+    return;
+  }
+
+  grid.innerHTML = items.map((it, i) => {
+    const title = it.type === 'note' ? `Nota ${it.note}` : (it.name || '');
+    const src = getCardImageSrc(it);
+    return `<button type="button" class="lib-card" onclick="openLibraryCard(${i})" aria-label="${escHtml(title)}">
+        <img src="${src}" alt="${escHtml(title)}" loading="lazy" onerror="this.style.opacity='0.12'">
+        <span class="lib-card-name">${escHtml(title)}</span>
+      </button>`;
+  }).join('');
+}
+
+function openLibraryCard(i) {
+  const card = _libCurrent[i];
+  if (card) openCardZoom(card, null);
+}
+
+// ── Configuración dentro de la partida ────────────────────────────────────────
+
+function showSettingsModal() {
+  showModal(`
+    <p class="modal-title">⚙️ Configuración</p>
+    <div id="game-settings"></div>
+    <p class="settings-note">La dificultad se aplica de inmediato. Las cartas iniciales y el mazo cambian en la próxima partida (ajústalos en «Cambiar jugadores»).</p>
+    <div class="modal-actions">
+      <button class="modal-btn secondary" onclick="closeModal(); if(window.MTutorial) MTutorial.open(0);">📖 Ver tutorial</button>
+      <button class="modal-btn primary" onclick="closeModal()">Listo</button>
+    </div>
+  `);
+  renderGameSettings();
+}
+
+function renderGameSettings() {
+  const host = document.getElementById('game-settings');
+  if (!host || !window.MSettings) return;
+  const S = MSettings.get();
+  const yn = [{ val: true, label: 'Sí' }, { val: false, label: 'No' }];
+  const row = (icon, title, control) => `
+    <div class="opt-row"><div class="opt-label">${icon} ${title}</div>${control}</div>`;
+  host.innerHTML = `
+    <div class="opt-grid">
+      ${row('🔊', 'Sonido', _optSeg('soundEnabled', S.soundEnabled, yn, 'setGameSetting'))}
+      ${row('⚡', 'Velocidad', _optSeg('animSpeed', S.animSpeed, [
+        { val: 'lenta', label: 'Lenta' }, { val: 'normal', label: 'Normal' }, { val: 'rapida', label: 'Rápida' }], 'setGameSetting'))}
+      ${row('🤖', 'Dificultad CPU', _optSeg('difficulty', S.difficulty, [
+        { val: 'facil', label: 'Fácil' }, { val: 'media', label: 'Media' }, { val: 'dificil', label: 'Difícil' }], 'setGameSetting'))}
+      ${row('🔒', 'Pasar dispositivo', _optSeg('privacyScreen', S.privacyScreen, yn, 'setGameSetting'))}
+      ${row('⏱️', 'Cuenta regresiva', _optSeg('passCountdown', S.passCountdown, yn, 'setGameSetting'))}
+    </div>`;
+}
+
+function setGameSetting(key, value) {
+  if (!window.MSettings) return;
+  MSettings.set(key, value);
+  // La dificultad se aplica a la partida en curso (la CPU la lee cada turno).
+  if (key === 'difficulty' && G) { G.difficulty = value; renderGame(); }
+  renderGameSettings();
+  if (key === 'soundEnabled' && value === true && window.MSfx) MSfx.play('select');
 }
 

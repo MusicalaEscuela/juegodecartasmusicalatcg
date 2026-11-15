@@ -1,42 +1,74 @@
 // ================================================================
 // MUSICALA – Firestore Security Rules
-// Pega estas reglas en Firebase Console > Firestore > Rules y publica.
 // ----------------------------------------------------------------
-// Nota: el lenguaje de reglas de Firestore NO admite funciones
-// flecha (p => p.uid) ni .map() con lambda. Por eso esta versión
-// usa solo comprobaciones simples y compila sin errores.
+// - Solo los jugadores de una sala pueden modificarla o borrarla.
+// - Solo los jugadores de una sala pueden leer o escribir sus manos.
+// - Unirse a una sala solo permite añadirse a uno mismo.
+// - No se pueden listar las salas (hay que conocer el código).
 //
-// Modelo de seguridad: requiere que el usuario haya iniciado sesión
-// (Google). Como el juego es de confianza entre amigos / aula y toda
-// la lógica corre en el cliente, basta con exigir autenticación.
-// Esto permite que las cartas que tocan la mano de OTROS jugadores
-// (Partitura, Rotación de Orquesta, Cambio de Notas, Ensayo Sorpresa,
-// Roba el Show) puedan sincronizar correctamente.
+// Requisito: cada sala guarda `playerUids` (lista de uid), que escribe
+// js/firebase.js. Detalles y pruebas: docs/REGLAS-FIRESTORE.md
+// La versión anterior (abierta a cualquier usuario con sesión) está en
+// docs/firestore.rules.anterior
 // ================================================================
 
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // ¿El usuario es jugador de la sala ya guardada?
+    function isMember(room) {
+      return signedIn() && request.auth.uid in room.playerUids;
+    }
+
     // ── Salas ─────────────────────────────────────────────────────
     match /rooms/{roomCode} {
 
-      // Leer la sala: cualquier usuario autenticado.
-      allow read: if request.auth != null;
+      // Leer UNA sala conociendo su código (necesario para unirse).
+      allow get: if signedIn();
 
-      // Crear sala: el hostUid debe ser el tuyo.
-      allow create: if request.auth != null
-                    && request.resource.data.hostUid == request.auth.uid;
+      // No se permite recorrer la colección de salas.
+      allow list: if false;
 
-      // Unirse / iniciar partida / actualizar estado / abandonar:
-      // cualquier jugador autenticado de la sala.
-      allow update, delete: if request.auth != null;
+      // Crear: quien crea es el anfitrión y el único jugador inicial.
+      allow create: if signedIn()
+                    && request.resource.data.code == roomCode
+                    && request.resource.data.hostUid == request.auth.uid
+                    && request.resource.data.status == 'waiting'
+                    && request.resource.data.playerUids == [request.auth.uid];
+
+      // Actualizar:
+      //  a) un jugador de la sala (jugadas, iniciar, salir), o
+      //  b) alguien que se une: sala en espera, con sitio, y el único
+      //     cambio es añadirse a sí mismo.
+      allow update: if isMember(resource.data)
+                    || (
+                         signedIn()
+                         && resource.data.status == 'waiting'
+                         && !(request.auth.uid in resource.data.playerUids)
+                         && resource.data.playerUids.size() < 8
+                         && request.resource.data.playerUids
+                              == resource.data.playerUids.concat([request.auth.uid])
+                         && request.resource.data.diff(resource.data)
+                              .affectedKeys().hasOnly(['players', 'playerUids'])
+                       );
+
+      // Borrar: solo un jugador de la sala (el último al salir).
+      allow delete: if isMember(resource.data);
 
       // ── Manos (sub-colección) ──────────────────────────────────
-      // Lectura/escritura para cualquier usuario autenticado, necesario
-      // para las cartas que modifican la mano de otros jugadores.
+      // Cualquier jugador de la sala puede leer y escribir las manos.
+      // Es necesario para las cartas que tocan la mano de otros
+      // (Partitura, Rotación de Orquesta, Cambio de Notas, Ensayo
+      // Sorpresa, Roba el Show). Quien no está en la sala, no entra.
       match /hands/{playerUid} {
-        allow read, write: if request.auth != null;
+        allow read, write: if isMember(
+          get(/databases/$(database)/documents/rooms/$(roomCode)).data
+        );
       }
     }
   }

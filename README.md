@@ -68,8 +68,8 @@ Después sube `CACHE_VERSION` en `sw.js` para que los dispositivos descarguen la
 
 ## Pendiente
 
-- **Reglas de Firestore:** siguen abiertas a cualquier usuario con sesión. Hay una propuesta
-  más estricta sin publicar ni probar: `docs/REGLAS-FIRESTORE.md`.
+- **Reglas de Firestore:** desplegadas el 2026-11-15 sin prueba con dos cuentas reales. Ver
+  `docs/REGLAS-FIRESTORE.md` (incluye cómo volver a las anteriores).
 - **Modo en línea:** los cambios de manejo de errores y "Volver a la sala" no se han probado
   con una partida real (requiere iniciar sesión con Google y dos jugadores).
 - **Fuentes locales e icono de 512 px desde el logo vectorial:** ver `docs/EMPAQUETADO-ANDROID.md`.

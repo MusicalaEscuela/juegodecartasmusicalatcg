@@ -1,4 +1,4 @@
-﻿/* ===================================================
+/* ===================================================
    MUSICALA  main.js  v2
    Punto de entrada y orquestacin
    =================================================== */
@@ -21,12 +21,16 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('btn-intro-online').addEventListener('click', async () => {
     showScreen('screen-online');
     await loadFirebase();
-    window.FB.onAuthStateChanged(window.FB.auth, (user) => {
-      if (user) {
-        ON.user = { uid: user.uid, name: user.displayName || 'Jugador', photoURL: user.photoURL };
-      }
-      renderOnlineAuth();
-    });
+    if (!window.FB) { renderOnlineUnavailable(); return; }
+    // Registrar el listener de sesion una sola vez (antes se duplicaba en cada clic).
+    if (!ON.authUnsub) {
+      ON.authUnsub = window.FB.onAuthStateChanged(window.FB.auth, (user) => {
+        ON.user = user
+          ? { uid: user.uid, name: user.displayName || 'Jugador', photoURL: user.photoURL }
+          : null;
+        renderOnlineAuth();
+      });
+    }
   });
 
   document.getElementById('btn-online-back').addEventListener('click', () => {

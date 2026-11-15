@@ -1,4 +1,4 @@
-﻿/* ===================================================
+/* ===================================================
    MUSICALA  online.js
    Modo online: autenticacin, lobby y sincronizacin
    =================================================== */
@@ -11,6 +11,7 @@ const ON = {
   user:        null,   // { uid, name, photoURL }
   roomCode:    null,
   myIndex:     -1,     // ndice de este jugador en room.players
+  authUnsub:   null,   // unsubscribe del listener de sesion
   roomUnsub:   null,   // unsubscribe del listener de la sala
   myHand:      [],     // mano privada de este jugador
   isHost:      false,
@@ -35,6 +36,20 @@ async function onlineLogout() {
   ON.user = null;
   ON.roomCode = null;
   renderOnlineAuth();
+}
+
+function renderOnlineUnavailable() {
+  const el = document.getElementById('online-auth-area');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="online-login-box">
+      <p class="online-intro">No se pudo conectar con el servicio en línea. Revisa tu conexión a internet e inténtalo de nuevo.</p>
+      <button class="btn-secondary" id="btn-online-retry">Reintentar</button>
+      <p class="online-note">Mientras tanto puedes jugar contra la CPU o en multijugador local, sin conexión.</p>
+    </div>`;
+  document.getElementById('btn-online-retry').addEventListener('click', () => {
+    document.getElementById('btn-intro-online').click();
+  });
 }
 
 //  Pantalla online: login / lobby 

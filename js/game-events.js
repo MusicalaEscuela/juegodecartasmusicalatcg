@@ -10,6 +10,9 @@
   let bannerEl       = null;
   let specialLabelEl = null;
 
+  // G se declara con `let` en game.js, asi que no vive en window.
+  function getG() { return (typeof G !== 'undefined' && G) ? G : null; }
+
   //  Tabla de clasificacin de mensajes 
   const MSG_RULES = [
     [/musicala/i,                                             'musicala'],
@@ -19,7 +22,7 @@
     [/intercambi|swap/i,                                     'special' ],
     [/especial|improvisac|desafinac|silencio|partitura|ensayo|nota\s+paso|fantasma|sostenido|bemol|becuadro/i, 'special'],
     [/roba\b/i,                                              'draw'    ],
-    [/jug[o]\b/i,                                           'play'    ],
+    [/jug[oó]/i,                                           'play'    ],
     [/turno\s+de\b/i,                                        'turn'    ],
   ];
 
@@ -61,9 +64,9 @@
     bannerEl.textContent = '▶ Turno de ' + name;
     bannerEl.classList.remove('show');
     void bannerEl.offsetWidth; // force reflow para reiniciar animacin
-    bannerEl.classList.add('ge-show');
+    bannerEl.classList.add('show');
     bannerEl.addEventListener('animationend', function () {
-      bannerEl.classList.remove('ge-show');
+      bannerEl.classList.remove('show');
     }, { once: true });
   };
 
@@ -114,7 +117,7 @@
     } else if (type === 'skip') {
       showSpecialEffect('🚫 Turno saltado', 'skip');
     } else if (type === 'draw') {
-      showSpecialEffect('🃏 +2 cartas', 'draw');
+      showSpecialEffect(/roba\s*2|\+2/i.test(msg) ? '🃏 +2 cartas' : '🃏 +1 carta', 'draw');
     } else if (type === 'musicala') {
       showSpecialEffect('🎶 ¡MUSICALA!', 'swap');
     }
@@ -158,7 +161,8 @@
       window.renderBoard = function () {
         var noteBefore = _prevNote;
         _origRB.apply(this, arguments);
-        var noteAfter = window.G && window.G.currentNote;
+        var g = getG();
+        var noteAfter = g && g.currentNote;
         if (noteAfter && noteAfter !== noteBefore) {
           _prevNote = noteAfter;
           animateActiveCard();
@@ -172,8 +176,9 @@
       var _origAT = window.advanceTurn;
       window.advanceTurn = function () {
         _origAT.apply(this, arguments);
-        if (window.G && window.G.players) {
-          var cur = window.G.players[window.G.currentPlayer];
+        var g = getG();
+        if (g && g.players && g.winner === null) {
+          var cur = g.players[g.currentPlayer];
           if (cur) showTurnBanner(cur.name);
         }
       };

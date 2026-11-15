@@ -1,4 +1,4 @@
-﻿/* ===================================================
+/* ===================================================
    MUSICALA  firebase.js
    Inicializacin Firebase + helpers Firestore
    =================================================== */
@@ -71,14 +71,18 @@ function genRoomCode() {
 }
 
 async function createRoom(hostName) {
-  const { db, doc, setDoc, serverTimestamp } = window.FB;
-  let code, tries = 0;
+  const { db, doc, getDoc, setDoc, serverTimestamp } = window.FB;
+  // Generar un codigo que no este en uso (antes no se comprobaba la colision).
+  let code, roomRef, tries = 0;
   do {
     code = genRoomCode();
+    roomRef = doc(db, 'rooms', code);
     tries++;
+    if (!(await getDoc(roomRef)).exists()) break;
+    code = null;
   } while (tries < 10);
+  if (!code) throw new Error('No se pudo generar un código de sala. Intenta de nuevo.');
 
-  const roomRef = doc(db, 'rooms', code);
   await setDoc(roomRef, {
     code,
     status:    'waiting',      // waiting | playing | ended
@@ -101,8 +105,8 @@ async function joinRoom(code, playerName) {
   const snap     = await getDoc(roomRef);
   if (!snap.exists())       throw new Error('Sala no encontrada.');
   const room = snap.data();
-  if (room.status !== 'waiting') throw new Error('La partida ya comenz.');
-  if (room.players.length >= 8)  throw new Error('La sala est llena (mx. 8).');
+  if (room.status !== 'waiting') throw new Error('La partida ya comenzó.');
+  if (room.players.length >= 8)  throw new Error('La sala está llena (máx. 8).');
 
   const alreadyIn = room.players.find(p => p.uid === _auth.currentUser.uid);
   if (!alreadyIn) {
@@ -165,7 +169,7 @@ async function startOnlineGame(code) {
     skipNext:      false,
     forcedDir:     null,
     selectedCards: [],
-    log:           [`La secuencia comienza en ${startCard.note}. Que empiece el juego!`],
+    log:           [`La secuencia comienza en ${startCard.note}. ¡Que empiece el juego!`],
     noteHistory:   [startCard.note],
     winner:        null,
     phase:         'play',

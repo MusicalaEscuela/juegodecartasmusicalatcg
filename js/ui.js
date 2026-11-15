@@ -880,24 +880,22 @@ function toggleHelp() {
 function updateHelpTip() {
   if (!G) return;
   const tip     = document.getElementById('help-tip');
-  const tipNote = document.getElementById('help-tip-note');
-  const tipUp   = document.getElementById('help-tip-up');
-  const tipDown = document.getElementById('help-tip-down');
   if (!tip) return;
 
+  // La escala es circular (SI sube a DO y DO baja a SI), igual que las reglas.
   const cur  = G.currentNote;
   const ci   = NOTES.indexOf(cur);
-  const up   = ci < NOTES.length - 1 ? NOTES[ci + 1] : '—';
-  const down = ci > 0 ? NOTES[ci - 1] : '—';
+  const up   = NOTES[(ci + 1) % NOTES.length];
+  const down = NOTES[(ci - 1 + NOTES.length) % NOTES.length];
 
-  if (tipNote) tipNote.textContent = cur;
-  if (tipUp)   tipUp.textContent   = G.forcedDir === 'desc' ? '—' : up;
-  if (tipDown) tipDown.textContent = G.forcedDir === 'asc'  ? '—' : down;
-
-  if (tip && G.forcedDir) {
-    tip.innerHTML = G.forcedDir === 'asc'
-      ? `💡 Hay un <strong>Sostenido ♯</strong> activo. Solo puedes subir → <strong id="help-tip-up">${up}</strong>`
-      : `💡 Hay un <strong>Bemol ♭</strong> activo. Solo puedes bajar → <strong id="help-tip-down">${down}</strong>`;
+  // Se reescribe completo en cada render para que nunca quede desactualizado.
+  if (G.forcedDir === 'asc') {
+    tip.innerHTML = `💡 Hay un <strong>Sostenido ♯</strong> activo. Solo puedes subir → <strong>${up}</strong>`;
+  } else if (G.forcedDir === 'desc') {
+    tip.innerHTML = `💡 Hay un <strong>Bemol ♭</strong> activo. Solo puedes bajar → <strong>${down}</strong>`;
+  } else {
+    tip.innerHTML = `💡 Nota actual: <strong>${cur}</strong>.
+      Puedes jugar <strong>${up}</strong> (↑), <strong>${down}</strong> (↓) o repetir <strong>${cur}</strong>.`;
   }
 }
 

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
@@ -9,24 +9,24 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="css/style.css?v=210-2" />
-  <link rel="stylesheet" href="css/card.css?v=210-2" />
-  <link rel="stylesheet" href="css/animations.css?v=210-2" />
-  <link rel="stylesheet" href="css/enhancements.css?v=210-2" />
-  <link rel="stylesheet" href="css/game-events.css?v=210-2" />
-  <link rel="stylesheet" href="css/card-menu.css?v=210-2" />
+  <link rel="stylesheet" href="css/style.css?v=210-3" />
+  <link rel="stylesheet" href="css/card.css?v=210-3" />
+  <link rel="stylesheet" href="css/animations.css?v=210-3" />
+  <link rel="stylesheet" href="css/enhancements.css?v=210-3" />
+  <link rel="stylesheet" href="css/game-events.css?v=210-3" />
+  <link rel="stylesheet" href="css/card-menu.css?v=210-3" />
 <!-- Scripts (defer: no bloquean el render; se ejecutan en orden) -->
-<script defer src="js/settings.js?v=210-2"></script>
-<script defer src="js/sfx.js?v=210-2"></script>
-<script defer src="js/cards.js?v=210-2"></script>
-<script defer src="js/game.js?v=210-2"></script>
-<script defer src="js/ui.js?v=210-2"></script>
-<script defer src="js/tutorial.js?v=210-2"></script>
-<script defer src="js/firebase.js?v=210-2"></script>
-<script defer src="js/online.js?v=210-2"></script>
-<script defer src="js/game-events.js?v=210-2"></script>
-<script defer src="js/audio.js?v=210-2"></script>
-<script defer src="js/main.js?v=210-2"></script>
+<script defer src="js/settings.js?v=210-3"></script>
+<script defer src="js/sfx.js?v=210-3"></script>
+<script defer src="js/cards.js?v=210-3"></script>
+<script defer src="js/game.js?v=210-3"></script>
+<script defer src="js/ui.js?v=210-3"></script>
+<script defer src="js/tutorial.js?v=210-3"></script>
+<script defer src="js/firebase.js?v=210-3"></script>
+<script defer src="js/online.js?v=210-3"></script>
+<script defer src="js/game-events.js?v=210-3"></script>
+<script defer src="js/audio.js?v=210-3"></script>
+<script defer src="js/main.js?v=210-3"></script>
 </head>
 <body>
 <audio id="bg-music" src="assets/audio/musicala_bg_loop.mp3" preload="none" loop></audio>
@@ -68,10 +68,10 @@
     </div>
 
     <div class="intro-features">
-      <div class="intro-feature"><span class="feature-icon"></span><span>2 a 8 músicos</span></div>
-      <div class="intro-feature"><span class="feature-icon"></span><span>86 cartas únicas</span></div>
-      <div class="intro-feature"><span class="feature-icon"></span><span>Multijugador local</span></div>
-      <div class="intro-feature"><span class="feature-icon"></span><span>Escalas musicales</span></div>
+      <div class="intro-feature"><span class="feature-icon" aria-hidden="true">👥</span><span>2 a 8 músicos</span></div>
+      <div class="intro-feature"><span class="feature-icon" aria-hidden="true">🃏</span><span>86 cartas únicas</span></div>
+      <div class="intro-feature"><span class="feature-icon" aria-hidden="true">🤝</span><span>Multijugador local</span></div>
+      <div class="intro-feature"><span class="feature-icon" aria-hidden="true">🎼</span><span>Escalas musicales</span></div>
     </div>
 
     <div class="intro-scale-preview">
@@ -115,7 +115,7 @@
       <p class="logo-slogan">vida, alma y música</p>
     </div>
 
-    <h1 class="setup-title">Jugar en línea </h1>
+    <h1 class="setup-title">Jugar en línea</h1>
     <p class="setup-subtitle">Conéctate con amigos desde cualquier dispositivo</p>
 
     <!-- Auth area -->
@@ -131,7 +131,7 @@
       <div class="spinner-ring"></div>
     </div>
 
-    <button class="btn-link-small" id="btn-online-back" style="margin-top:16px"> Volver al inicio</button>
+    <button class="btn-link-small" id="btn-online-back" style="margin-top:16px">← Volver al inicio</button>
   </div>
 </div>
 
@@ -150,7 +150,7 @@
     <div class="lobby-code-box">
       <span class="lobby-code-label">Código de sala</span>
       <span class="lobby-code-display" id="lobby-code-display">----</span>
-      <button class="btn-link-small" id="btn-copy-code" title="Copiar código"> Copiar</button>
+      <button class="btn-link-small" id="btn-copy-code" title="Copiar código">Copiar</button>
     </div>
 
     <div class="setup-card">
@@ -254,7 +254,7 @@
       <span class="status-chip online-badge" id="chip-online" style="display:none"> Online</span>
     </div>
     <button class="btn-icon audio-toggle" id="btn-audio-toggle" type="button" title="Música" aria-label="Activar o desactivar música" aria-pressed="false">🔇</button>
-    <button class="btn-icon" id="btn-menu" title="Menu de opciones" aria-label="Menu de opciones"></button>
+    <button class="btn-icon" id="btn-menu" title="Menú de opciones" aria-label="Menú de opciones"></button>
   </header>
 
   <div class="game-body">
@@ -309,7 +309,7 @@
     <!-- History strip - note chips + last log entry -->
     <div class="history-strip">
       <div class="history-entries" id="history-entries"></div>
-      <button class="history-toggle" id="btn-history">Historial </button>
+      <button class="history-toggle" id="btn-history">Historial</button>
     </div>
 
     <!-- Player hand -->
@@ -340,8 +340,8 @@
   <div class="help-float">
     <div class="help-panel" id="help-panel">
       <div class="help-header">
-        <span class="help-title-text"> Carta de Apoyo</span>
-        <button class="help-close" onclick="toggleHelp()"></button>
+        <span class="help-title-text">Carta de Apoyo</span>
+        <button class="help-close" onclick="toggleHelp()" aria-label="Cerrar carta de apoyo">✕</button>
       </div>
       <div class="help-body">
         <button class="help-tutorial-btn" type="button" onclick="if(window.MTutorial) MTutorial.open(0)">📖 Ver tutorial paso a paso</button>
@@ -438,7 +438,7 @@
 <!-- CARD ZOOM OVERLAY -->
 <div class="card-zoom-overlay" id="card-zoom-overlay" onclick="closeCardZoom()">
   <div class="card-zoom-inner" onclick="event.stopPropagation()">
-    <button class="card-zoom-close" onclick="closeCardZoom()"></button>
+    <button class="card-zoom-close" onclick="closeCardZoom()" aria-label="Cerrar">✕</button>
     <div class="card-zoom-img-wrap">
       <img class="card-zoom-img" id="card-zoom-img" src="" alt="">
       <div class="card-zoom-icon" id="card-zoom-icon" style="display:none"></div>
@@ -466,7 +466,7 @@
     <!-- Header: nombre de la carta + botn cerrar -->
     <div class="cam-header">
       <span class="cam-card-name" id="cam-card-name">Carta</span>
-      <button class="cam-close" id="cam-close" aria-label="Cerrar men"></button>
+      <button class="cam-close" id="cam-close" aria-label="Cerrar menú">✕</button>
     </div>
 
     <!-- Preview de la carta -->
@@ -479,15 +479,15 @@
     <div class="cam-actions">
 
       <button class="cam-btn cam-btn-view" id="cam-btn-view">
-        <span class="cam-btn-icon"></span>
+        <span class="cam-btn-icon" aria-hidden="true">🔍</span>
         <div class="cam-btn-text">
           <span class="cam-btn-label">Ver carta</span>
-          <span class="cam-btn-sub">Ver imagen y descripcin completa</span>
+          <span class="cam-btn-sub">Ver imagen y descripción completa</span>
         </div>
       </button>
 
       <button class="cam-btn cam-btn-play" id="cam-btn-play">
-        <span class="cam-btn-icon"></span>
+        <span class="cam-btn-icon" aria-hidden="true">▶</span>
         <div class="cam-btn-text">
           <span class="cam-btn-label">Jugar carta</span>
           <span class="cam-btn-sub" id="cam-btn-play-sub">Poner esta carta en juego</span>
@@ -498,7 +498,7 @@
 
     <!-- Hint cuando la carta no es válida -->
     <div class="cam-invalid-hint" id="cam-invalid-hint" style="display:none">
-      <span class="cam-hint-icon"></span>
+      <span class="cam-hint-icon" aria-hidden="true">⚠</span>
       <span id="cam-invalid-text">Esta carta no es válida en este turno</span>
     </div>
 

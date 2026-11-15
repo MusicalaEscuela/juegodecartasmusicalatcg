@@ -10,6 +10,7 @@
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  if (id === 'screen-intro' && typeof updateContinueButton === 'function') updateContinueButton();
 }
 
 // ── Toast ─────────────────────────────────────────────────────────────────────
@@ -263,6 +264,8 @@ function renderGame() {
   renderActionBar();
   renderHistory();
   updateHelpTip();
+  // Guardado automático de la partida local (sobrevive a una recarga).
+  if (window.MSave) MSave.auto();
 }
 
 const DIFFICULTY_LABELS = {
@@ -732,7 +735,10 @@ function handlePostPlay(result) {
       cambioNotas: { title: 'Cambio de Notas', desc: 'Elige el jugador con quien intercambiar tu mano.' },
     };
     const { title, desc } = labels[result.needsTarget] || { title: 'Elegir jugador', desc: '' };
+    // Elección pendiente: se guarda con la partida para poder retomarla tras una recarga.
+    G._pending = { needsTarget: result.needsTarget, playerIdx: result.playerIdx };
     showPlayerSelectModal(title, desc, result.playerIdx, async (targetIdx) => {
+      G._pending = null;
       if (G._onlineMode) await onlineResolveTarget(result.needsTarget, result.playerIdx, targetIdx);
       else resolveTarget(result.needsTarget, result.playerIdx, targetIdx);
       renderGame();
@@ -744,6 +750,7 @@ function handlePostPlay(result) {
 
   if (result.needsNotePasoChoice) {
     const options = result.noteOptions || [];
+    G._pending = { needsNotePasoChoice: true, playerIdx: result.playerIdx, noteOptions: options };
     showNotePasoChoiceModal(G.currentNote, options, async (chosenNote) => {
       const pick = resolveNotePasoChoice(result.playerIdx, chosenNote);
       if (!pick.ok) {
@@ -751,6 +758,7 @@ function handlePostPlay(result) {
         renderGame();
         return;
       }
+      G._pending = null;
       if (G._onlineMode) await pushOnlineStateAfterPendingChoice();
       renderGame();
       if (G.winner !== null) setTimeout(() => showWinnerScreen(), 600);

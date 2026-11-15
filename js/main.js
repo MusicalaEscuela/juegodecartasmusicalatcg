@@ -11,6 +11,10 @@ document.addEventListener('DOMContentLoaded', () => {
   initCardActionMenu();
 
   //  Intro 
+  const _btnContinue = document.getElementById('btn-intro-continue');
+  if (_btnContinue) _btnContinue.addEventListener('click', resumeSavedGame);
+  updateContinueButton();
+
   document.getElementById('btn-intro-play').addEventListener('click', () => {
     showScreen('screen-setup'); renderSetup();
   });
@@ -157,6 +161,52 @@ function startGame() {
   }
 
   if (!isHumanTurn()) scheduleNextTurn();
+}
+
+// ── Continuar una partida local guardada ─────────────────────────────────────
+
+function updateContinueButton() {
+  const btn = document.getElementById('btn-intro-continue');
+  if (!btn) return;
+  const data = window.MSave ? MSave.load() : null;
+  btn.hidden = !data;
+  if (data) {
+    const names = data.game.players.map(p => p.name).join(' · ');
+    btn.textContent = '▶ Continuar partida';
+    btn.title = `Turno ${data.game.turnCount + 1} — ${names}`;
+    const sub = document.getElementById('intro-continue-sub');
+    if (sub) { sub.hidden = false; sub.textContent = `Partida guardada: turno ${data.game.turnCount + 1} · ${names}`; }
+  } else {
+    const sub = document.getElementById('intro-continue-sub');
+    if (sub) sub.hidden = true;
+  }
+}
+
+function resumeSavedGame() {
+  const data = window.MSave ? MSave.load() : null;
+  if (!data) {
+    updateContinueButton();
+    showToast('No hay ninguna partida guardada.');
+    return;
+  }
+  if (aiTimer) clearTimeout(aiTimer);
+  if (typeof window.startBackgroundMusic === 'function') window.startBackgroundMusic();
+  if (typeof window.initGameEvents === 'function') window.initGameEvents();
+
+  G = data.game;
+  G.selectedCards = [];
+  if (Array.isArray(data.setupPlayers) && data.setupPlayers.length >= 2) setupPlayers = data.setupPlayers;
+
+  showScreen('screen-game');
+  renderGame();
+
+  // Si se recargó a mitad de una elección (jugador objetivo / Nota de Paso), se vuelve a pedir.
+  if (G._pending) { handlePostPlay({ ok: true, ...G._pending }); return; }
+  if (G.phase === 'improvisacion' && isHumanTurn()) {
+    showToast('¡Improvisación! Elige una carta de nota.');
+    return;
+  }
+  scheduleNextTurn();
 }
 
 // Robar carta (mazo o botón). Sonido + mensaje claro + animación.

@@ -501,7 +501,9 @@ function aiTurn(playerIdx) {
       G.forcedDir = null;
       G.phase = 'play';
       addLog(`${player.name} improvisa con ${chosen.note}.`);
-      checkMusicala(playerIdx); checkWinner(playerIdx);
+      checkMusicala(playerIdx);
+      // Igual que el jugador humano: tras improvisar, el turno pasa.
+      if (!checkWinner(playerIdx)) advanceTurn();
     } else {
       // Red de seguridad (p. ej. una partida guardada antes de la corrección).
       G.phase = 'play';

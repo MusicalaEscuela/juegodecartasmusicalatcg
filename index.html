@@ -6,10 +6,10 @@
   <title>Musicala - Juego de Cartas</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css?v=20260419-1" />
-  <link rel="stylesheet" href="css/card.css?v=20260419-1" />
-  <link rel="stylesheet" href="css/animations.css?v=20260419-1" />
-  <link rel="stylesheet" href="css/enhancements.css?v=20260614-1" />
+  <link rel="stylesheet" href="css/style.css?v=210-1" />
+  <link rel="stylesheet" href="css/card.css?v=210-1" />
+  <link rel="stylesheet" href="css/animations.css?v=210-1" />
+  <link rel="stylesheet" href="css/enhancements.css?v=210-1" />
 
   <!-- 
        GAME EVENTS - CSS (equivalente a css/game-events.css)
@@ -183,7 +183,7 @@
   </style>
 </head>
 <body>
-<audio id="bg-music" src="assets/audio/musicala_bg_loop.mp3" preload="auto" loop></audio>
+<audio id="bg-music" src="assets/audio/musicala_bg_loop.mp3" preload="none" loop></audio>
 
 <!-- 
      INTRO SCREEN
@@ -421,7 +421,7 @@
       <div class="board-left">
         <div class="deck-pile" id="deck-pile" title="Robar carta">
           <div class="pile-card">
-            <img src="assets/backs/back.png" alt="Mazo" class="back-img"
+            <img src="assets/backs/back-sm.webp" alt="Mazo" class="back-img" loading="lazy" decoding="async"
                  onerror="this.style.display='none'; this.nextElementSibling.style.display='flex'">
             <div class="pile-svg-fallback" style="display:none">
               <svg width="28" height="18" viewBox="0 0 90 56" fill="none">
@@ -668,14 +668,14 @@
 </div>
 
 <!--  Scripts externos  -->
-<script src="js/settings.js?v=20260614-1"></script>
-<script src="js/sfx.js?v=20260614-1"></script>
-<script src="js/cards.js?v=20260419-1"></script>
-<script src="js/game.js?v=20260614-1"></script>
-<script src="js/ui.js?v=20260614-1"></script>
-<script src="js/tutorial.js?v=20260614-1"></script>
-<script src="js/firebase.js?v=20260419-1"></script>
-<script src="js/online.js?v=20260614-1"></script>
+<script src="js/settings.js?v=210-1"></script>
+<script src="js/sfx.js?v=210-1"></script>
+<script src="js/cards.js?v=210-1"></script>
+<script src="js/game.js?v=210-1"></script>
+<script src="js/ui.js?v=210-1"></script>
+<script src="js/tutorial.js?v=210-1"></script>
+<script src="js/firebase.js?v=210-1"></script>
+<script src="js/online.js?v=210-1"></script>
 
 <!-- 
      CARD ACTION MENU - CSS + JS inline
@@ -1206,8 +1206,8 @@
 </script>
 
 <!--  main.js cargado DESPUS de game-events.js  -->
-<script src="js/audio.js?v=20260428-1"></script>
-<script src="js/main.js?v=20260614-1"></script>
+<script src="js/audio.js?v=210-1"></script>
+<script src="js/main.js?v=210-1"></script>
 
 <!-- 
      PATCH startGame  llama initGameEvents()

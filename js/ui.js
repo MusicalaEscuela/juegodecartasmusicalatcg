@@ -315,7 +315,7 @@ function renderOpponents() {
       + (G.currentPlayer === i ? ' active-turn' : '');
 
     const miniCards = p.hand.slice(0, 14).map(() =>
-      `<div class="opp-mini-card"><img src="assets/backs/back.png" onerror="this.style.display='none'" alt=""></div>`
+      `<div class="opp-mini-card"><img src="assets/backs/back-sm.webp" width="20" height="28" decoding="async" onerror="this.style.display='none'" alt=""></div>`
     ).join('');
     const cpuBadge   = !p.isHuman ? '<span class="cpu-badge">CPU</span>' : '';
     const humanBadge = p.isHuman  ? '<span class="cpu-badge" style="background:rgba(12,65,196,0.4);color:#93c5fd">HUM</span>' : '';
@@ -338,8 +338,8 @@ function renderBoard() {
   card.style.background = NOTE_COLORS[G.currentNote] || '#555';
   card.style.boxShadow  = `0 0 40px ${NOTE_COLORS[G.currentNote] || '#5729FF'}66`;
 
-  const imgSrc = `assets/cards/nota_${G.currentNote.toLowerCase()}.png`;
-  noteImg.src = imgSrc;
+  const imgSrc = `assets/cards/nota_${G.currentNote.toLowerCase()}.webp`;
+  if (noteImg.getAttribute('src') !== imgSrc) noteImg.src = imgSrc;
   noteImg.alt = G.currentNote;
   noteImg.style.display = 'block';
   noteName.style.display = 'none';
@@ -454,10 +454,12 @@ function animateDrawnCard() {
 
 // ── Card element builder ──────────────────────────────────────────────────────
 
-function getCardImageSrc(card) {
-  if (card.type === 'note')    return `assets/cards/nota_${card.note.toLowerCase()}.png`;
-  if (card.type === 'alt')     return `assets/cards/carta_${card.id}.png`;
-  if (card.type === 'special') return `assets/cards/carta_${card.id}.png`;
+// size: 'lg' (640px, carta central / zoom) o 'sm' (260px, mano / biblioteca).
+function getCardImageSrc(card, size) {
+  const dir = size === 'sm' ? 'assets/cards/sm/' : 'assets/cards/';
+  if (card.type === 'note')    return `${dir}nota_${card.note.toLowerCase()}.webp`;
+  if (card.type === 'alt')     return `${dir}carta_${card.id}.webp`;
+  if (card.type === 'special') return `${dir}carta_${card.id}.webp`;
   return null;
 }
 
@@ -483,7 +485,7 @@ function buildCardElement(card, idx, interactive, mask) {
 
   const noteLabel = card.type === 'note' ? card.note : (card.icon || '?');
   const subLabel  = card.type === 'note' ? (card.label || '') : (card.name || '');
-  const imgSrc    = getCardImageSrc(card);
+  const imgSrc    = getCardImageSrc(card, 'sm');
   const typeIcon  = card.type === 'note' ? '♩' : (card.type === 'alt' ? '♯' : '★');
   const typeWord  = card.type === 'note' ? 'Nota' : (card.type === 'alt' ? 'Alteración' : 'Carta especial');
   const altText   = card.type === 'note' ? `Carta de nota ${card.note}` : `${typeWord}: ${subLabel}`;
@@ -510,7 +512,7 @@ function buildCardElement(card, idx, interactive, mask) {
         </div>
         <div class="card-img-area">
           ${imgSrc
-            ? `<img class="card-face-img" src="${imgSrc}"
+            ? `<img class="card-face-img" src="${imgSrc}" decoding="async" draggable="false"
                  onerror="this.style.display='none';this.nextElementSibling.style.display='flex';" alt="${escHtml(altText)}">
                <div class="card-icon-big" style="display:none">${escHtml(noteLabel)}</div>`
             : `<div class="card-icon-big">${escHtml(noteLabel)}</div>`
@@ -522,7 +524,7 @@ function buildCardElement(card, idx, interactive, mask) {
         </div>
       </div>
       <div class="card-back">
-        <img src="assets/backs/back.png" onerror="this.style.display='none'" alt="">
+        <img src="assets/backs/back-sm.webp" loading="lazy" decoding="async" onerror="this.style.display='none'" alt="">
       </div>
     </div>
   `;

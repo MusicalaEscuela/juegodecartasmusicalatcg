@@ -276,9 +276,9 @@ function renderLibraryGrid() {
 
   grid.innerHTML = items.map((it, i) => {
     const title = it.type === 'note' ? `Nota ${it.note}` : (it.name || '');
-    const src = getCardImageSrc(it);
+    const src = getCardImageSrc(it, 'sm');
     return `<button type="button" class="lib-card" onclick="openLibraryCard(${i})" aria-label="${escHtml(title)}">
-        <img src="${src}" alt="${escHtml(title)}" loading="lazy" onerror="this.style.opacity='0.12'">
+        <img src="${src}" alt="${escHtml(title)}" loading="lazy" decoding="async" onerror="this.style.opacity='0.12'">
         <span class="lib-card-name">${escHtml(title)}</span>
       </button>`;
   }).join('');

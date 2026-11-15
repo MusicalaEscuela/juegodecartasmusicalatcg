@@ -13,7 +13,7 @@
    Al publicar una versión nueva, sube CACHE_VERSION.
    =================================================== */
 
-const CACHE_VERSION = 'v2.1.0';
+const CACHE_VERSION = 'v2.2.0';
 const SHELL_CACHE   = `musicala-shell-${CACHE_VERSION}`;
 const ASSET_CACHE   = `musicala-assets-${CACHE_VERSION}`;
 const RUNTIME_CACHE = `musicala-runtime-${CACHE_VERSION}`;
@@ -25,8 +25,8 @@ const SHELL = [
   'logo.png',
   'css/tokens.css', 'css/style.css', 'css/card.css', 'css/animations.css',
   'css/enhancements.css', 'css/game-events.css', 'css/card-menu.css',
-  'css/layout.css', 'css/motion.css', 'css/a11y.css',
-  'js/boot.js', 'js/settings.js', 'js/sfx.js', 'js/fx.js', 'js/cards.js', 'js/game.js',
+  'css/layout.css', 'css/motion.css', 'css/cardfx.css', 'css/polish.css', 'css/a11y.css',
+  'js/boot.js', 'js/settings.js', 'js/sfx.js', 'js/fx.js', 'js/cardfx.js', 'js/cards.js', 'js/game.js',
   'js/ui.js', 'js/persist.js', 'js/tutorial.js', 'js/firebase.js', 'js/online.js',
   'js/game-events.js', 'js/audio.js', 'js/main.js',
 ];

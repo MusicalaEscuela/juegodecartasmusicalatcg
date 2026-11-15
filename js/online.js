@@ -246,6 +246,18 @@ function subscribeToRoom(code) {
         // Siempre refrescar mano privada desde subdoc para evitar desincronización.
         ON.myHand = await readMyHand(code, ON.user.uid);
         ON.latestState = room.gameState;
+        // Efecto de carta para las jugadas de otros jugadores (las propias ya lo muestran al jugar).
+        try {
+          const disc = (room.gameState && room.gameState.discard) || [];
+          const top = disc[disc.length - 1];
+          const key = top ? `${disc.length}:${top.uid}` : '';
+          const mine = G && G._onlineMode && G.discard && G.discard.length === disc.length;
+          if (key && ON.lastDiscardKey && key !== ON.lastDiscardKey && !mine
+              && top.effect && window.MCardFx) {
+            MCardFx.trigger(top.effect);
+          }
+          ON.lastDiscardKey = key;
+        } catch (e) { /* solo presentación */ }
         syncOnlineStateToG(room.gameState, room.players);
 
         if (document.getElementById('screen-game').classList.contains('active')) {

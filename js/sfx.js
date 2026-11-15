@@ -90,6 +90,8 @@ const MSfx = (function () {
         tone(130, 0.16, 'sine', 0.10, 0.05);
         break;
       case 'special':
+        // Si la carta ya lanzó su firma sonora propia, no se solapa el efecto genérico.
+        if (window.MCardFx && MCardFx.justPlayed()) break;
         tone(523, 0.10, 'square', 0.08);
         tone(659, 0.12, 'square', 0.08, 0.06);
         tone(784, 0.14, 'square', 0.07, 0.12);
@@ -112,7 +114,13 @@ const MSfx = (function () {
     }
   }
 
-  return { play, enabled };
+  /** Reproduce una secuencia de tonos: [[frecuencia, duración, onda, volumen, retraso], …] */
+  function motif(notes) {
+    if (!enabled() || !Array.isArray(notes)) return;
+    notes.forEach(n => tone(n[0], n[1], n[2], n[3], n[4]));
+  }
+
+  return { play, motif, enabled };
 })();
 
 window.MSfx = MSfx;

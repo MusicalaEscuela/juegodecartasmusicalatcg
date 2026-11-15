@@ -251,6 +251,7 @@ function applyAlteration(card, playerIdx) {
     G.forcedDir = null;
     addLog(`${player.name} jugó Becuadro ♮. Alteración cancelada.`);
   }
+  if (window.MCardFx) MCardFx.trigger(card.effect);   // solo presentación
   checkMusicala(playerIdx);
   if (checkWinner(playerIdx)) return { ok: true };
   advanceTurn();
@@ -261,6 +262,7 @@ function applySpecial(card, playerIdx) {
   const player = G.players[playerIdx];
   player.specialsUsed = (player.specialsUsed || 0) + 1;
   addLog(`${player.name} jugó ${card.name}.`);
+  if (window.MCardFx) MCardFx.trigger(card.effect);   // solo presentación
 
   if (card.effect === 'partitura') {
     G.players.forEach((p, i) => {

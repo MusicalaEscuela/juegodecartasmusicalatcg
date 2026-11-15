@@ -298,6 +298,12 @@ function applySpecial(card, playerIdx) {
       advanceTurn(); break;
     }
     case 'improvisacion':
+      // Sin cartas de nota no hay con qué improvisar: el turno pasa (antes la partida se bloqueaba).
+      if (!player.hand.some(c => c.type === 'note')) {
+        addLog(`${player.name} no tiene notas para improvisar. Pasa el turno.`);
+        advanceTurn();
+        break;
+      }
       G.phase = 'improvisacion';
       addLog('¡Improvisación! Elige una nota de tu mano.');
       return { ok: true, phase: 'improvisacion' };
@@ -496,6 +502,11 @@ function aiTurn(playerIdx) {
       G.phase = 'play';
       addLog(`${player.name} improvisa con ${chosen.note}.`);
       checkMusicala(playerIdx); checkWinner(playerIdx);
+    } else {
+      // Red de seguridad (p. ej. una partida guardada antes de la corrección).
+      G.phase = 'play';
+      addLog(`${player.name} no tiene notas para improvisar. Pasa el turno.`);
+      advanceTurn();
     }
     return;
   }

@@ -65,9 +65,8 @@ Después sube `CACHE_VERSION` en `sw.js` para que los dispositivos descarguen la
 
 ## Pendiente
 
-- **Improvisación sin notas:** si un jugador (humano o CPU) juega Improvisación y no tiene
-  cartas de nota, la partida se queda bloqueada. Además la CPU no pasa el turno después de
-  improvisar, a diferencia del jugador humano. Son cambios de reglas: falta decidir.
+- **Improvisación con la CPU:** la CPU no pasa el turno después de improvisar (juega otra
+  carta), a diferencia del jugador humano. Es un cambio de reglas: falta decidir.
 - **Cancelar una elección:** cerrar el diálogo de "elige un jugador" o de Nota de Paso deja
   la carta gastada sin efecto y el turno sin avanzar.
 - **Contraste de las píldoras de nota** (texto blanco sobre RE y MI): cambiarlo toca los

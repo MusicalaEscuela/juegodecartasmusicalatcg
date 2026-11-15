@@ -223,6 +223,13 @@ function resumeSavedGame() {
 
   // Si se recargó a mitad de una elección (jugador objetivo / Nota de Paso), se vuelve a pedir.
   if (G._pending) { handlePostPlay({ ok: true, ...G._pending }); return; }
+  if (G.phase === 'improvisacion' && isHumanTurn()
+      && !G.players[G.currentPlayer].hand.some(c => c.type === 'note')) {
+    // Partida guardada en el estado bloqueado antiguo: se libera pasando el turno.
+    G.phase = 'play';
+    advanceTurn();
+    renderGame();
+  }
   if (G.phase === 'improvisacion' && isHumanTurn()) {
     showToast('¡Improvisación! Elige una carta de nota.');
     return;

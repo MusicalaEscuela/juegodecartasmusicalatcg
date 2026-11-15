@@ -22,20 +22,73 @@ const ON = {
 
 async function onlineLogin() {
   const { auth, signInWithPopup, GoogleAuthProvider } = window.FB;
-  const provider = new GoogleAuthProvider();
-  const result   = await signInWithPopup(auth, provider);
-  const user     = result.user;
-  ON.user = { uid: user.uid, name: user.displayName || 'Jugador', photoURL: user.photoURL };
-  renderOnlineAuth();
+  try {
+    const provider = new GoogleAuthProvider();
+    const result   = await signInWithPopup(auth, provider);
+    const user     = result.user;
+    ON.user = { uid: user.uid, name: user.displayName || 'Jugador', photoURL: user.photoURL };
+    renderOnlineAuth();
+  } catch (e) {
+    const code = (e && e.code) || '';
+    if (code === 'auth/popup-closed-by-user' || code === 'auth/cancelled-popup-request') return;
+    console.error('[Online] Error al iniciar sesión:', e);
+    if (code === 'auth/popup-blocked') {
+      showToast('El navegador bloqueó la ventana de Google. Permite las ventanas emergentes e inténtalo de nuevo.', 4500);
+    } else if (code === 'auth/network-request-failed' || !navigator.onLine) {
+      showToast('Sin conexión. Revisa tu internet e inténtalo de nuevo.', 4000);
+    } else {
+      showToast('No se pudo iniciar sesión. Inténtalo de nuevo.', 4000);
+    }
+  }
 }
 
 async function onlineLogout() {
   const { auth, signOut } = window.FB;
-  if (ON.roomCode) await leaveRoom(ON.roomCode);
-  await signOut(auth);
+  try {
+    if (ON.roomCode) await leaveRoom(ON.roomCode);
+    await signOut(auth);
+  } catch (e) {
+    console.error('[Online] Error al cerrar sesión:', e);
+    showToast('No se pudo cerrar la sesión. Inténtalo de nuevo.');
+    return;
+  }
+  forgetRoom();
   ON.user = null;
   ON.roomCode = null;
   renderOnlineAuth();
+}
+
+// ── Recordar la sala para poder volver tras una recarga ──────────────────────
+
+const ROOM_KEY = 'musicala_room';
+function rememberRoom(code) { try { localStorage.setItem(ROOM_KEY, code); } catch (e) {} }
+function forgetRoom()       { try { localStorage.removeItem(ROOM_KEY); } catch (e) {} }
+function rememberedRoom()   { try { return localStorage.getItem(ROOM_KEY); } catch (e) { return null; } }
+
+async function handleRejoinRoom() {
+  const code = rememberedRoom();
+  if (!code || !ON.user) return;
+  try {
+    showOnlineSpinner(true);
+    const { db, doc, getDoc } = window.FB;
+    const snap = await getDoc(doc(db, 'rooms', code));
+    const room = snap.exists() ? snap.data() : null;
+    if (!room || !room.players.some(p => p.uid === ON.user.uid)) {
+      forgetRoom();
+      renderLobbyActions();
+      showToast('Esa sala ya no está disponible.');
+      return;
+    }
+    ON.roomCode = code;
+    ON.isHost   = room.hostUid === ON.user.uid;
+    if (room.status === 'waiting') showScreen('screen-lobby');
+    subscribeToRoom(code);
+  } catch (e) {
+    console.error('[Online] Error al volver a la sala:', e);
+    showToast('No se pudo volver a la sala. Revisa tu conexión.');
+  } finally {
+    showOnlineSpinner(false);
+  }
 }
 
 function renderOnlineUnavailable() {
@@ -107,6 +160,16 @@ function renderLobbyActions() {
       </div>
     </div>
   `;
+  const saved = rememberedRoom();
+  if (saved && /^[A-Z0-9]{4}$/.test(saved)) {
+    const rejoin = document.createElement('button');
+    rejoin.className = 'btn-online';
+    rejoin.id = 'btn-rejoin-room';
+    rejoin.style.marginBottom = '12px';
+    rejoin.textContent = `Volver a la sala ${saved}`;
+    rejoin.addEventListener('click', handleRejoinRoom);
+    el.prepend(rejoin);
+  }
   document.getElementById('btn-create-room').addEventListener('click', handleCreateRoom);
   document.getElementById('btn-join-room').addEventListener('click', handleJoinRoom);
   document.getElementById('join-code-input').addEventListener('keydown', e => {
@@ -122,6 +185,7 @@ async function handleCreateRoom() {
     const code = await createRoom(ON.user.name);
     ON.roomCode = code;
     ON.isHost   = true;
+    rememberRoom(code);
     showScreen('screen-lobby');
     subscribeToRoom(code);
   } catch (e) {
@@ -140,6 +204,7 @@ async function handleJoinRoom() {
     await joinRoom(code, ON.user.name);
     ON.roomCode = code;
     ON.isHost   = false;
+    rememberRoom(code);
     showScreen('screen-lobby');
     subscribeToRoom(code);
   } catch (e) {
@@ -153,47 +218,63 @@ async function handleJoinRoom() {
 
 function subscribeToRoom(code) {
   if (ON.roomUnsub) ON.roomUnsub();
+  ON.winnerShown = false;
   const { db, doc, onSnapshot } = window.FB;
   ON.roomUnsub = onSnapshot(doc(db, 'rooms', code), async (snap) => {
-    if (!snap.exists()) {
-      showToast('La sala fue cerrada.');
-      exitOnlineMode();
-      return;
-    }
-    const room = snap.data();
+    try {
+      if (!snap.exists()) {
+        showToast('La sala fue cerrada.');
+        exitOnlineMode();
+        return;
+      }
+      const room = snap.data();
 
-    // Encontrar mi ndice
-    ON.myIndex = room.players.findIndex(p => p.uid === ON.user.uid);
+      // Encontrar mi índice (y si sigo siendo anfitrión: puede cambiar si alguien sale)
+      ON.myIndex = room.players.findIndex(p => p.uid === ON.user.uid);
+      ON.isHost  = room.hostUid === ON.user.uid;
 
-    if (room.status === 'waiting') {
-      renderLobbyScreen(room);
-    }
-
-    if (room.status === 'playing') {
-      if (typeof window.startBackgroundMusic === 'function') {
-        window.startBackgroundMusic();
+      if (room.status === 'waiting') {
+        renderLobbyScreen(room);
       }
 
-      // Siempre refrescar mano privada desde subdoc para evitar desincronizacin.
-      ON.myHand = await readMyHand(code, ON.user.uid);
-      ON.latestState = room.gameState;
-      syncOnlineStateToG(room.gameState, room.players);
+      if (room.status === 'playing') {
+        if (typeof window.startBackgroundMusic === 'function') {
+          window.startBackgroundMusic();
+        }
+        if (typeof window.initGameEvents === 'function') window.initGameEvents();
 
-      if (document.getElementById('screen-game').classList.contains('active')) {
-        renderGame();
-        // Si es mi turno y gan
-        if (G.winner !== null) {
+        // Siempre refrescar mano privada desde subdoc para evitar desincronización.
+        ON.myHand = await readMyHand(code, ON.user.uid);
+        ON.latestState = room.gameState;
+        syncOnlineStateToG(room.gameState, room.players);
+
+        if (document.getElementById('screen-game').classList.contains('active')) {
+          renderGame();
+        } else {
+          showScreen('screen-game');
+          renderGame();
+        }
+        if (G.winner !== null && !ON.winnerShown) {
+          ON.winnerShown = true;
           setTimeout(() => showWinnerScreen(), 600);
         }
-      } else {
-        showScreen('screen-game');
-        renderGame();
       }
-    }
 
-    if (room.status === 'ended') {
-      showToast('La partida terminó.');
+      if (room.status === 'ended') {
+        showToast('La partida terminó.');
+      }
+    } catch (e) {
+      console.error('[Online] Error al procesar la sala:', e);
+      showToast('Hubo un problema al sincronizar la sala. Reintentando…');
     }
+  }, (err) => {
+    // Error del listener (permisos, red caída de forma permanente, etc.)
+    console.error('[Online] Se perdió la conexión con la sala:', err);
+    showToast('Se perdió la conexión con la sala. Puedes volver a entrar desde «Jugar en línea».', 5000);
+    if (ON.roomUnsub) { ON.roomUnsub(); ON.roomUnsub = null; }
+    G = null;
+    showScreen('screen-online');
+    renderOnlineAuth();
   });
 }
 
@@ -309,18 +390,28 @@ function onlineHumanPlayScale(indices) {
 }
 
 async function _pushOnlineState() {
-  if (!G._onlineMode) return;
+  if (!G || !G._onlineMode) return;
   const myHand = [...G.players[ON.myIndex].hand];
   ON.myHand = myHand;
-
-  // Guardar primero la mano privada y despus el estado pblico.
-  // As, cuando llegue el snapshot del room, la mano ya est actualizada.
-  await writeMyHand(ON.roomCode, ON.user.uid, myHand);
-
-  // Serializar G  Firestore (sin las manos privadas, solo handCounts)
   const publicState = buildPublicState();
-  await writeGameState(ON.roomCode, publicState);
+
+  try {
+    // Guardar primero la mano privada y después el estado público.
+    // Así, cuando llegue el snapshot del room, la mano ya está actualizada.
+    await writeMyHand(ON.roomCode, ON.user.uid, myHand);
+    await writeGameState(ON.roomCode, publicState);
+    ON.pendingPush = false;
+  } catch (e) {
+    console.error('[Online] No se pudo enviar la jugada:', e);
+    ON.pendingPush = true;
+    showToast('No se pudo enviar tu jugada. Se reintentará al recuperar la conexión.', 4500);
+  }
 }
+
+// Reintentar una jugada que no se pudo enviar cuando vuelve la conexión.
+window.addEventListener('online', () => {
+  if (ON.pendingPush && G && G._onlineMode) _pushOnlineState();
+});
 
 async function syncAllHandsThenPlay(cardIdx) {
   const hands = await Promise.all(G.players.map((p, i) => (
@@ -369,14 +460,17 @@ async function onlineResolveTarget(effect, playerIdx, targetIdx) {
 
   resolveTarget(effect, playerIdx, targetIdx);
 
-  await writeMyHand(ON.roomCode, currentUid, G.players[playerIdx].hand);
-  await writeMyHand(ON.roomCode, targetUid, G.players[targetIdx].hand);
-
   if (playerIdx === ON.myIndex) ON.myHand = [...G.players[playerIdx].hand];
   if (targetIdx === ON.myIndex) ON.myHand = [...G.players[targetIdx].hand];
 
-  const publicState = buildPublicState();
-  await writeGameState(ON.roomCode, publicState);
+  try {
+    await writeMyHand(ON.roomCode, currentUid, G.players[playerIdx].hand);
+    await writeMyHand(ON.roomCode, targetUid, G.players[targetIdx].hand);
+    await writeGameState(ON.roomCode, buildPublicState());
+  } catch (e) {
+    console.error('[Online] No se pudo sincronizar la carta especial:', e);
+    showToast('No se pudo sincronizar la jugada. Revisa tu conexión.', 4500);
+  }
 }
 
 function buildPublicState() {
@@ -416,7 +510,9 @@ function isMyOnlineTurn() {
 async function exitOnlineMode() {
   if (ON.roomUnsub) { ON.roomUnsub(); ON.roomUnsub = null; }
   if (ON.roomCode)  { await leaveRoom(ON.roomCode).catch(() => {}); }
+  forgetRoom();
   ON.roomCode    = null;
+  ON.pendingPush = false;
   ON.myIndex     = -1;
   ON.myHand      = [];
   ON.latestState = null;

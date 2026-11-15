@@ -23,6 +23,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   //  Online mode 
   document.getElementById('btn-intro-online').addEventListener('click', async () => {
+    if (!navigator.onLine) {
+      showToast('Sin conexión a internet. El modo en línea no está disponible ahora.', 4000);
+      return;
+    }
     showScreen('screen-online');
     await loadFirebase();
     if (!window.FB) { renderOnlineUnavailable(); return; }
@@ -50,7 +54,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.getElementById('btn-copy-code').addEventListener('click', () => {
     const code = document.getElementById('lobby-code-display').textContent;
-    navigator.clipboard.writeText(code).then(() => showToast(`Código ${code} copiado ✅`));
+    const ok = () => showToast(`Código ${code} copiado ✅`);
+    const fail = () => showToast(`Tu código es ${code}. Cópialo manualmente.`, 4000);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(ok).catch(fail);
+    } else {
+      fail();
+    }
   });
 
   //  Setup 
@@ -131,6 +141,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (window.MSfx) MSfx.play('tap');
     if (window.MFx) MFx.haptic('tap');
   }, { passive: true });
+
+  //  Estado de la red: aviso discreto (el juego local sigue funcionando)
+  const netBanner = document.getElementById('net-banner');
+  const updateNet = () => { if (netBanner) netBanner.hidden = navigator.onLine; };
+  window.addEventListener('online', () => { updateNet(); showToast('Conexión recuperada ✅'); });
+  window.addEventListener('offline', updateNet);
+  updateNet();
 
   //  Modal backdrop 
   document.getElementById('modal-overlay').addEventListener('click', (e) => {
@@ -402,3 +419,15 @@ function setGameSetting(key, value) {
   if (key === 'soundEnabled' && value === true && window.MSfx) MSfx.play('select');
 }
 
+
+// ── Red de seguridad: ningún error asíncrono debe quedar en silencio ──────────
+
+let _lastErrorToast = 0;
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('[Musicala] Error no controlado:', e.reason);
+  const now = Date.now();
+  if (now - _lastErrorToast > 5000 && typeof showToast === 'function') {
+    _lastErrorToast = now;
+    showToast('Algo no salió bien. Si el problema sigue, recarga el juego.', 4000);
+  }
+});

@@ -1,0 +1,77 @@
+// ================================================================
+// MUSICALA – Firestore Security Rules  ·  PROPUESTA (NO PUBLICADA)
+// ----------------------------------------------------------------
+// Este archivo es un borrador. Las reglas vigentes siguen siendo las
+// de /firestore.rules. Lee docs/REGLAS-FIRESTORE.md antes de publicar.
+//
+// Qué cambia respecto a las reglas actuales:
+//   - Solo los jugadores de una sala pueden modificarla o borrarla.
+//   - Solo los jugadores de una sala pueden leer o escribir sus manos.
+//   - Unirse a una sala solo permite añadirse a uno mismo.
+//   - No se pueden listar las salas (hay que conocer el código).
+//
+// Requisito: cada sala debe tener el campo `playerUids` (lista de uid).
+// El código ya lo escribe desde la v2.2 (js/firebase.js).
+// ================================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // ¿El usuario es jugador de la sala ya guardada?
+    function isMember(room) {
+      return signedIn() && request.auth.uid in room.playerUids;
+    }
+
+    // ── Salas ─────────────────────────────────────────────────────
+    match /rooms/{roomCode} {
+
+      // Leer UNA sala conociendo su código (necesario para unirse).
+      allow get: if signedIn();
+
+      // No se permite recorrer la colección de salas.
+      allow list: if false;
+
+      // Crear: quien crea es el anfitrión y el único jugador inicial.
+      allow create: if signedIn()
+                    && request.resource.data.code == roomCode
+                    && request.resource.data.hostUid == request.auth.uid
+                    && request.resource.data.status == 'waiting'
+                    && request.resource.data.playerUids == [request.auth.uid];
+
+      // Actualizar:
+      //  a) un jugador de la sala (jugadas, iniciar, salir), o
+      //  b) alguien que se une: sala en espera, con sitio, y el único
+      //     cambio es añadirse a sí mismo.
+      allow update: if isMember(resource.data)
+                    || (
+                         signedIn()
+                         && resource.data.status == 'waiting'
+                         && !(request.auth.uid in resource.data.playerUids)
+                         && resource.data.playerUids.size() < 8
+                         && request.resource.data.playerUids
+                              == resource.data.playerUids.concat([request.auth.uid])
+                         && request.resource.data.diff(resource.data)
+                              .affectedKeys().hasOnly(['players', 'playerUids'])
+                       );
+
+      // Borrar: solo un jugador de la sala (el último al salir).
+      allow delete: if isMember(resource.data);
+
+      // ── Manos (sub-colección) ──────────────────────────────────
+      // Cualquier jugador de la sala puede leer y escribir las manos.
+      // Es necesario para las cartas que tocan la mano de otros
+      // (Partitura, Rotación de Orquesta, Cambio de Notas, Ensayo
+      // Sorpresa, Roba el Show). Quien no está en la sala, no entra.
+      match /hands/{playerUid} {
+        allow read, write: if isMember(
+          get(/databases/$(database)/documents/rooms/$(roomCode)).data
+        );
+      }
+    }
+  }
+}

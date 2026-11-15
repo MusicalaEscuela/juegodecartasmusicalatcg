@@ -93,6 +93,9 @@ async function createRoom(hostName) {
       name:   hostName,
       ready:  false,
     }],
+    // Lista paralela de uid: la necesitan las reglas de seguridad más estrictas
+    // (docs/REGLAS-FIRESTORE.md). Debe mantenerse igual que `players`.
+    playerUids: [_auth.currentUser.uid],
     gameState: null,
     createdAt: serverTimestamp(),
   });
@@ -115,7 +118,8 @@ async function joinRoom(code, playerName) {
         uid:   _auth.currentUser.uid,
         name:  playerName,
         ready: false,
-      }]
+      }],
+      playerUids: [...(room.playerUids || room.players.map(p => p.uid)), _auth.currentUser.uid],
     });
   }
   return room;
@@ -133,7 +137,7 @@ async function leaveRoom(code) {
     await deleteDoc(roomRef);
   } else {
     const newHost = updated[0].uid;
-    await updateDoc(roomRef, { players: updated, hostUid: newHost });
+    await updateDoc(roomRef, { players: updated, playerUids: updated.map(p => p.uid), hostUid: newHost });
   }
 }
 

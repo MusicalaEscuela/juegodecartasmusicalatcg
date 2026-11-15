@@ -1,0 +1,204 @@
+/* ===================================================
+   MUSICALA – layout.css  (v2.1)
+   Mesa de juego pensada primero para móvil.
+   Se carga DESPUÉS de style/card/enhancements y solo
+   ajusta estructura: no cambia colores ni contenido.
+   =================================================== */
+
+/* ── Pantalla de juego: columna que reparte el alto real ── */
+#screen-game.active {
+  display: flex !important;
+  flex-direction: column;
+}
+
+.game-header {
+  height: auto;
+  min-height: var(--header-h);
+  padding-top: max(var(--space-2), var(--safe-top));
+  padding-left: max(var(--space-3), var(--safe-left));
+  padding-right: max(var(--space-3), var(--safe-right));
+}
+
+.game-body {
+  flex: 1 1 auto;
+  height: auto;
+  min-height: 0;
+  padding-bottom: max(10px, var(--safe-bottom));
+}
+
+/* ── Zonas táctiles ≥ 44px ── */
+.btn-icon {
+  width: var(--tap);
+  height: var(--tap);
+}
+
+.history-strip {
+  padding-top: 2px !important;
+  padding-bottom: 2px !important;
+}
+
+.history-toggle {
+  min-height: var(--tap);
+  min-width: var(--tap);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.help-close,
+.card-zoom-close,
+.cam-close,
+.btn-remove {
+  min-width: var(--tap);
+  min-height: var(--tap);
+}
+
+.btn-link-small,
+.type-btn,
+.opt-seg-btn,
+.lib-filter,
+.modal-btn,
+.player-select-btn {
+  min-height: var(--tap);
+}
+
+/* Botón ⓘ de la carta: el círculo se ve igual, pero la zona
+   que responde al dedo ocupa 44×44 en la esquina. */
+.card-info-btn {
+  width: var(--tap);
+  height: var(--tap);
+  bottom: 0;
+  right: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  font-size: 0;
+}
+.card-info-btn::before {
+  content: 'i';
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(10, 12, 38, 0.82);
+  color: #fff;
+  font-family: var(--font-title);
+  font-size: 13px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+  transition: transform var(--dur-fast), background var(--dur-fast);
+}
+.card-info-btn:hover,
+.card-info-btn:focus-visible {
+  background: none;
+  transform: none;
+}
+.card-info-btn:hover::before,
+.card-info-btn:focus-visible::before {
+  background: var(--violeta-vivaldi);
+  transform: scale(1.15);
+}
+
+/* ── Mano: usa el alto disponible en vez de dejar un hueco ── */
+@supports (container-type: size) {
+  .hand-cards {
+    container-type: size;
+  }
+
+  /* Pantallas anchas: una fila, las cartas crecen con el alto libre. */
+  @media (min-width: 561px) {
+    .hand-cards .card {
+      --card-h-hand: clamp(126px, calc(100cqh - 30px), 216px);
+      --card-w-hand: calc(var(--card-h-hand) * 0.7);
+    }
+  }
+
+  /* Teléfono en vertical: rejilla de 4 columnas, toda la mano a la vista. */
+  @media (max-width: 560px) {
+    .hand-cards {
+      flex-wrap: wrap;
+      align-items: flex-start;
+      align-content: flex-start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      gap: var(--space-2);
+      padding: 10px var(--space-1) 60px;
+    }
+    .hand-cards .card {
+      --card-w-hand: calc((100cqw - 8px - 24px) / 4);
+      --card-h-hand: calc(var(--card-w-hand) * 1.43);
+    }
+  }
+}
+
+/* ── Teléfono: encabezado en dos filas (acciones arriba, estado abajo) ── */
+@media (max-width: 560px) {
+  .game-header {
+    flex-wrap: wrap;
+    row-gap: 6px;
+    padding-bottom: 6px;
+  }
+  .header-logo        { order: 1; margin-right: auto; }
+  #btn-audio-toggle   { order: 2; }
+  #btn-menu           { order: 3; }
+  .header-status {
+    order: 4;
+    flex: 0 0 100%;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+    gap: 6px;
+  }
+  .header-status::-webkit-scrollbar { display: none; }
+  .status-chip { flex-shrink: 0; }
+  #chip-turn {
+    font-size: var(--text-sm);
+    padding: 6px 12px;
+  }
+
+  .game-body { gap: 6px; }
+}
+
+@media (max-width: 560px) {
+  .hand-cards { scrollbar-width: none; }
+  .hand-cards::-webkit-scrollbar { display: none; }
+
+  /* Círculo ⓘ más pequeño para no tapar el nombre (la zona táctil sigue en 44px). */
+  .card-info-btn::before {
+    width: 20px;
+    height: 20px;
+    right: 3px;
+    bottom: 3px;
+    font-size: 11px;
+  }
+  .hand-cards .card-name { padding-right: 20px; }
+
+  /* El botón de ayuda flotante no debe tapar la pista de la mano. */
+  .hand-hint {
+    padding-right: 56px;
+    text-align: left;
+  }
+
+  /* Avisos de jugadas: bajo el encabezado, sin tapar los chips de estado. */
+  #event-feed {
+    top: calc(112px + var(--safe-top));
+    right: var(--space-2);
+    max-width: 68vw;
+  }
+  .game-toast {
+    font-size: var(--text-xs);
+    padding: 6px 10px;
+  }
+}

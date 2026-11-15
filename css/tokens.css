@@ -1,0 +1,53 @@
+/* ===================================================
+   MUSICALA – tokens.css  (v2.1)
+   Sistema de diseño: escalas compartidas de espaciado,
+   tipografía, tamaños táctiles, movimiento y capas.
+   Los colores de marca y de notas siguen en style.css
+   (:root) — aquí se añaden las escalas que faltaban.
+   Se carga ANTES que el resto de hojas.
+   =================================================== */
+
+:root {
+  /* Espaciado (base 4px) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Tipografía */
+  --text-xs:  12px;
+  --text-sm:  13px;
+  --text-md:  15px;
+  --text-lg:  18px;
+  --text-xl:  24px;
+  --text-2xl: 32px;
+  --leading-tight: 1.2;
+  --leading-body:  1.5;
+
+  /* Zonas táctiles */
+  --tap: 44px;
+
+  /* Movimiento */
+  --dur-fast: 120ms;
+  --dur-base: 220ms;
+  --dur-slow: 380ms;
+
+  /* Capas */
+  --z-header:  30;
+  --z-overlay: 500;
+  --z-toast:   900;
+  --z-loader:  2000;
+
+  /* Foco visible */
+  --focus-color: #9d8cff;
+  --focus-ring: 0 0 0 3px rgba(157, 140, 255, 0.75);
+
+  /* Zonas seguras (notch / barra de gestos) */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left:   env(safe-area-inset-left, 0px);
+  --safe-right:  env(safe-area-inset-right, 0px);
+}

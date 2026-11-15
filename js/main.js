@@ -76,7 +76,11 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   //  Game actions
-  document.getElementById('deck-pile').addEventListener('click', handleDrawClick);
+  const _deckPile = document.getElementById('deck-pile');
+  _deckPile.addEventListener('click', handleDrawClick);
+  _deckPile.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleDrawClick(); }
+  });
   const _btnDraw = document.getElementById('btn-draw');
   if (_btnDraw) _btnDraw.addEventListener('click', handleDrawClick);
 

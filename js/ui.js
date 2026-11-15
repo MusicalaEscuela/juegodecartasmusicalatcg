@@ -26,12 +26,21 @@ function showToast(msg, duration = 2800) {
 
 // ── Modal ─────────────────────────────────────────────────────────────────────
 
+let _modalReturnFocus = null;
+
 function showModal(html, onClose) {
   const overlay = document.getElementById('modal-overlay');
   const box     = document.getElementById('modal-box');
+  if (overlay.style.display === 'none') _modalReturnFocus = document.activeElement;
   box.innerHTML  = html;
   overlay.style.display = 'flex';
   overlay._onClose = onClose;
+
+  // Accesibilidad: título como nombre del diálogo y foco dentro.
+  const title = box.querySelector('.modal-title');
+  if (title) { title.id = 'modal-title'; box.setAttribute('aria-labelledby', 'modal-title'); }
+  else box.removeAttribute('aria-labelledby');
+  box.focus({ preventScroll: true });
 }
 
 function closeModal() {
@@ -39,7 +48,55 @@ function closeModal() {
   overlay.style.display = 'none';
   if (typeof overlay._onClose === 'function') overlay._onClose();
   overlay._onClose = null;
+  restoreFocus(_modalReturnFocus);
+  _modalReturnFocus = null;
 }
+
+function restoreFocus(el) {
+  if (el && document.contains(el) && typeof el.focus === 'function') {
+    try { el.focus({ preventScroll: true }); } catch (err) { /* sin foco */ }
+  }
+}
+
+// Mantiene Tab dentro del diálogo abierto y cierra con Escape.
+function topDialog() {
+  const tut = document.getElementById('tutorial-overlay');
+  if (tut && tut.classList.contains('open')) return null;            // el tutorial gestiona su teclado
+  const zoom = document.getElementById('card-zoom-overlay');
+  if (zoom && zoom.classList.contains('open')) return { el: zoom.querySelector('.card-zoom-inner'), close: closeCardZoom };
+  const cam = document.getElementById('card-action-overlay');
+  if (cam && cam.classList.contains('open')) return { el: document.getElementById('card-action-menu'), close: closeCardActionMenu };
+  const modal = document.getElementById('modal-overlay');
+  if (modal && modal.style.display !== 'none') return { el: document.getElementById('modal-box'), close: closeModal };
+  const pass = document.getElementById('pass-screen-overlay');
+  if (pass && pass.style.display !== 'none') return { el: pass.querySelector('.pass-screen-content'), close: null };
+  return null;
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Tab' && e.key !== 'Escape') return;
+  const dlg = topDialog();
+  if (!dlg || !dlg.el) {
+    if (e.key === 'Escape') {
+      const help = document.getElementById('help-panel');
+      if (help && help.classList.contains('open')) toggleHelp();
+    }
+    return;
+  }
+  if (e.key === 'Escape') {
+    if (dlg.close && !e.defaultPrevented) { e.preventDefault(); dlg.close(); }
+    return;
+  }
+  const focusables = [...dlg.el.querySelectorAll(
+    'button:not([disabled]), [href], input:not([disabled]), select, textarea, [tabindex]:not([tabindex="-1"])'
+  )].filter(n => n.offsetParent !== null);
+  if (focusables.length === 0) { e.preventDefault(); return; }
+  const first = focusables[0];
+  const last  = focusables[focusables.length - 1];
+  if (!dlg.el.contains(document.activeElement)) { e.preventDefault(); first.focus(); }
+  else if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+  else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+});
 
 function showPlayerSelectModal(title, desc, excludeIdx, callback) {
   const targets = G.players.map((p, i) => ({ ...p, i })).filter(p => p.i !== excludeIdx);
@@ -161,13 +218,13 @@ function renderSetup() {
     row.innerHTML = `
       <div class="player-num">${i + 1}</div>
       <input class="player-name-input" type="text" value="${escHtml(p.name)}"
-        maxlength="16" placeholder="Nombre"
+        maxlength="16" placeholder="Nombre" aria-label="Nombre del jugador ${i + 1}" autocomplete="off"
         onchange="setupPlayers[${i}].name = this.value.trim() || 'Jugador ${i+1}'" />
       <div class="player-type-toggle">
-        <button class="type-btn ${p.isHuman ? 'active' : ''}" onclick="setPlayerType(${i}, true)">Humano</button>
-        <button class="type-btn cpu ${!p.isHuman ? 'active' : ''}" onclick="setPlayerType(${i}, false)">CPU</button>
+        <button type="button" class="type-btn ${p.isHuman ? 'active' : ''}" aria-pressed="${p.isHuman}" onclick="setPlayerType(${i}, true)">Humano</button>
+        <button type="button" class="type-btn cpu ${!p.isHuman ? 'active' : ''}" aria-pressed="${!p.isHuman}" onclick="setPlayerType(${i}, false)">CPU</button>
       </div>
-      ${i >= 2 ? `<button class="btn-remove" onclick="removePlayer(${i})" title="Eliminar">×</button>` : '<span></span>'}
+      ${i >= 2 ? `<button type="button" class="btn-remove" onclick="removePlayer(${i})" title="Eliminar" aria-label="Eliminar jugador ${i + 1}">×</button>` : '<span></span>'}
     `;
     grid.appendChild(row);
   });
@@ -319,9 +376,10 @@ function renderOpponents() {
     slot.className = 'opponent-slot'
       + (G.currentPlayer === i ? ' active-turn' : '');
     slot.dataset.playerIdx = i;
+    slot.setAttribute('aria-label', `${p.name}, ${p.hand.length} carta${p.hand.length !== 1 ? 's' : ''}${G.currentPlayer === i ? ', es su turno' : ''}`);
 
     const miniCards = p.hand.slice(0, 14).map(() =>
-      `<div class="opp-mini-card"><img src="assets/backs/back-sm.webp" width="20" height="28" decoding="async" onerror="this.style.display='none'" alt=""></div>`
+      `<div class="opp-mini-card" aria-hidden="true"><img src="assets/backs/back-sm.webp" width="20" height="28" decoding="async" onerror="this.style.display='none'" alt=""></div>`
     ).join('');
     const cpuBadge   = !p.isHuman ? '<span class="cpu-badge">CPU</span>' : '';
     const humanBadge = p.isHuman  ? '<span class="cpu-badge" style="background:rgba(12,65,196,0.4);color:#93c5fd">HUM</span>' : '';
@@ -904,7 +962,10 @@ function spawnConfetti() {
 function toggleHelp() {
   const panel = document.getElementById('help-panel');
   panel.classList.toggle('open');
-  if (panel.classList.contains('open')) updateHelpTip();
+  const open = panel.classList.contains('open');
+  const btn = document.getElementById('btn-help');
+  if (btn) btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if (open) updateHelpTip();
 }
 
 function updateHelpTip() {
@@ -1042,11 +1103,18 @@ function openCardZoom(card, playable) {
     }
   }
 
+  if (!overlay.classList.contains('open')) _zoomReturnFocus = document.activeElement;
   overlay.classList.add('open');
+  const inner = overlay.querySelector('.card-zoom-inner');
+  if (inner) inner.focus({ preventScroll: true });
 }
+
+let _zoomReturnFocus = null;
 
 function closeCardZoom() {
   document.getElementById('card-zoom-overlay').classList.remove('open');
+  restoreFocus(_zoomReturnFocus);
+  _zoomReturnFocus = null;
 }
 
 // ── Card Action Menu ──────────────────────────────────────────────────────────
@@ -1144,10 +1212,4 @@ function initCardActionMenu() {
     if (idx !== null) handleCardClick(idx);
   });
 
-  // ESC cierra el menú
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && overlay.classList.contains('open')) {
-      closeCardActionMenu();
-    }
-  });
 }

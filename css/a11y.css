@@ -1,0 +1,85 @@
+/* ===================================================
+   MUSICALA – a11y.css  (v2.1)
+   Accesibilidad: foco visible, contraste y tamaños
+   mínimos de texto. Se carga al final.
+   =================================================== */
+
+/* ── Contraste: el texto atenuado pasa de 30 % a 60 % de blanco
+      (≈ 7:1 sobre el fondo de la mesa; antes ≈ 2.7:1). ── */
+:root {
+  --text-dim: rgba(255, 255, 255, 0.60);
+  --text-muted: rgba(255, 255, 255, 0.74);
+}
+
+/* ── Foco visible con teclado en todo lo interactivo ── */
+:where(button, a, input, select, textarea, [role="button"], [tabindex]):focus-visible {
+  outline: 2px solid var(--focus-color);
+  outline-offset: 2px;
+}
+.card:focus-visible {
+  outline: 3px solid var(--focus-color);
+  outline-offset: 3px;
+  box-shadow: var(--focus-ring);
+}
+.deck-pile:focus-visible {
+  outline: 3px solid var(--focus-color);
+  outline-offset: 4px;
+  border-radius: 10px;
+}
+/* El foco programático de diálogos no necesita anillo. */
+[tabindex="-1"]:focus { outline: none; }
+
+/* ── Solo para lectores de pantalla ── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Tamaños mínimos de texto (antes había textos de 7–10 px) ── */
+.status-chip,
+.hand-hint,
+.hand-label,
+.hand-count,
+.opp-count,
+.pile-count,
+.active-note-label,
+.history-toggle,
+.opt-hint,
+.section-label,
+.info-badge {
+  font-size: var(--text-xs);
+}
+.opt-seg-btn,
+.type-btn {
+  font-size: var(--text-sm);
+}
+.note-pill      { font-size: 11px; }
+.cpu-badge      { font-size: 10px; }
+.discard-label  { font-size: 9px; letter-spacing: 0.04em; }
+
+@media (max-width: 560px) {
+  /* A 7 px el resumen dentro de la carta no se puede leer: el detalle está en ⓘ. */
+  .hand-cards .card-sub-text { display: none; }
+  .hand-cards .card-name     { font-size: 11px; }
+}
+
+/* ── Inicio en teléfono: las acciones primero, la explicación después ── */
+@media (max-width: 560px) {
+  .intro-wrap {
+    display: flex;
+    flex-direction: column;
+  }
+  .intro-logo          { order: 1; }
+  .intro-hero          { order: 2; }
+  .intro-actions       { order: 3; }
+  .intro-scale-preview { order: 4; }
+  .intro-description   { order: 5; }
+  .intro-features      { order: 6; }
+}

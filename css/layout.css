@@ -234,3 +234,8 @@
 
 /* Los avisos de jugadas solo tienen sentido sobre la mesa. */
 body:not(:has(#screen-game.active)) #event-feed { display: none; }
+
+/* En teléfono solo se muestra el aviso más reciente (el resto está en el historial). */
+@media (max-width: 560px) {
+  #event-feed .game-toast:not(:last-child) { display: none; }
+}

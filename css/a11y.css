@@ -83,3 +83,17 @@
   .intro-description   { order: 5; }
   .intro-features      { order: 6; }
 }
+
+/* ── Píldoras de nota: mismo tono, un punto más oscuro para que el texto
+      blanco cumpla contraste AA (≥ 4.5:1). Los colores de las cartas no cambian. ── */
+.note-pill.do  { background: #D32F2F; }
+.note-pill.re  { background: #B85C00; }
+.note-pill.mi  { background: #8A7400; }
+.note-pill.fa  { background: #1B7A36; }
+
+/* Diálogo obligatorio: pequeño "no" cuando se intenta cerrar sin elegir. */
+@keyframes modalNudge {
+  20%, 60% { transform: translateX(-7px); }
+  40%, 80% { transform: translateX(7px); }
+}
+.modal-nudge { animation: modalNudge 0.3s ease; }

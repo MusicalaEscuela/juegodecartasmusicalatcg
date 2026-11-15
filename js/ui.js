@@ -28,13 +28,15 @@ function showToast(msg, duration = 2800) {
 
 let _modalReturnFocus = null;
 
-function showModal(html, onClose) {
+function showModal(html, onClose, opts) {
   const overlay = document.getElementById('modal-overlay');
   const box     = document.getElementById('modal-box');
   if (overlay.style.display === 'none') _modalReturnFocus = document.activeElement;
   box.innerHTML  = html;
   overlay.style.display = 'flex';
   overlay._onClose = onClose;
+  // locked: elección obligatoria; no se cierra tocando fuera ni con Escape.
+  overlay._locked = !!(opts && opts.locked);
 
   // Accesibilidad: título como nombre del diálogo y foco dentro.
   const title = box.querySelector('.modal-title');
@@ -52,6 +54,18 @@ function closeModal() {
   _modalReturnFocus = null;
 }
 
+// Cierre pedido por el usuario (tocar fuera / Escape). Respeta los diálogos obligatorios.
+function dismissModal() {
+  const overlay = document.getElementById('modal-overlay');
+  if (overlay._locked) {
+    const box = document.getElementById('modal-box');
+    box.classList.remove('modal-nudge'); void box.offsetWidth; box.classList.add('modal-nudge');
+    if (window.MSfx) MSfx.play('error');
+    return;
+  }
+  closeModal();
+}
+
 function restoreFocus(el) {
   if (el && document.contains(el) && typeof el.focus === 'function') {
     try { el.focus({ preventScroll: true }); } catch (err) { /* sin foco */ }
@@ -67,7 +81,7 @@ function topDialog() {
   const cam = document.getElementById('card-action-overlay');
   if (cam && cam.classList.contains('open')) return { el: document.getElementById('card-action-menu'), close: closeCardActionMenu };
   const modal = document.getElementById('modal-overlay');
-  if (modal && modal.style.display !== 'none') return { el: document.getElementById('modal-box'), close: closeModal };
+  if (modal && modal.style.display !== 'none') return { el: document.getElementById('modal-box'), close: dismissModal };
   const pass = document.getElementById('pass-screen-overlay');
   if (pass && pass.style.display !== 'none') return { el: pass.querySelector('.pass-screen-content'), close: null };
   return null;
@@ -107,10 +121,7 @@ function showPlayerSelectModal(title, desc, excludeIdx, callback) {
     <p class="modal-title">${title}</p>
     <p class="modal-body">${desc}</p>
     <div class="player-select-list">${btns}</div>
-    <div class="modal-actions">
-      <button class="modal-btn secondary" onclick="closeModal()">Cancelar</button>
-    </div>
-  `);
+  `, null, { locked: true });   // la carta ya se jugó: hay que elegir (antes "Cancelar" la dejaba sin efecto)
   window._playerSelectCb = (targetIdx) => { closeModal(); callback(targetIdx); };
 }
 
@@ -125,7 +136,7 @@ function showNotePasoChoiceModal(currentNote, options, callback) {
     <p class="modal-title">Nota de Paso</p>
     <p class="modal-body">Nota actual: <strong>${escHtml(currentNote)}</strong>. ${escHtml(txt)}</p>
     <div class="player-select-list">${btns}</div>
-  `);
+  `, null, { locked: true });
   window._notePasoSelectCb = (chosenNote) => { closeModal(); callback(chosenNote); };
 }
 
@@ -400,6 +411,9 @@ function renderBoard() {
   const noteLabel = document.getElementById('active-note-label');
 
   card.style.background = NOTE_COLORS[G.currentNote] || '#555';
+  // El ambiente de la mesa toma el color de la nota en juego (css/polish.css).
+  const screenGame = document.getElementById('screen-game');
+  if (screenGame) screenGame.style.setProperty('--note-color', NOTE_COLORS[G.currentNote] || '#5729FF');
   card.style.boxShadow  = `0 0 40px ${NOTE_COLORS[G.currentNote] || '#5729FF'}66`;
 
   const imgSrc = `assets/cards/nota_${G.currentNote.toLowerCase()}.webp`;
@@ -418,7 +432,16 @@ function renderBoard() {
     badge.className = 'forced-dir-badge';
   }
 
-  document.getElementById('deck-count').textContent = `${G.deck.length} carta${G.deck.length !== 1 ? 's' : ''}`;
+  setCountText(document.getElementById('deck-count'), `${G.deck.length} carta${G.deck.length !== 1 ? 's' : ''}`);
+}
+
+// Cambia el texto de un contador y le da un pequeño salto si el valor cambió.
+function setCountText(el, text) {
+  if (!el || el.textContent === text) return;
+  el.textContent = text;
+  el.classList.remove('pl-bump');
+  void el.offsetWidth;
+  el.classList.add('pl-bump');
 }
 
 // ── Note sequence history chips ───────────────────────────────────────────────
@@ -467,7 +490,7 @@ function renderHand() {
   const hint      = document.getElementById('hand-hint');
   const btnMusicala = document.getElementById('btn-musicala');
 
-  handCount.textContent = `${player.hand.length} carta${player.hand.length !== 1 ? 's' : ''}`;
+  setCountText(handCount, `${player.hand.length} carta${player.hand.length !== 1 ? 's' : ''}`);
   handLabel.textContent = player.name || 'Mano';
 
   const isMy     = isOnline ? isMyOnlineTurn() : isHumanTurn();
@@ -475,6 +498,10 @@ function renderHand() {
   const mask     = isMy ? getValidMask(realHand, G.currentNote, G.forcedDir) : [];
 
   btnMusicala.style.display = 'none';
+
+  // Marco luminoso de la mano cuando es tu turno.
+  const handArea = container.closest('.player-hand-area');
+  if (handArea) handArea.classList.toggle('my-turn', !!isMy && !G.winner);
 
   if (G.phase === 'improvisacion' && isMy) {
     hint.textContent = '🎹 Improvisación: selecciona una carta de NOTA para jugarla.';
@@ -547,7 +574,9 @@ function buildCardElement(card, idx, interactive, mask) {
   el.className = classes;
   el.title = card.desc || card.label || card.name || '';
 
-  const noteLabel = card.type === 'note' ? card.note : (card.icon || '?');
+  // Las cartas de efecto muestran el mismo símbolo que su efecto en pantalla.
+  const fxDef     = (window.MCardFx && MCardFx.DEFS[card.effect]) || null;
+  const noteLabel = card.type === 'note' ? card.note : (card.icon || (fxDef && fxDef.glyph) || '?');
   const subLabel  = card.type === 'note' ? (card.label || '') : (card.name || '');
   const imgSrc    = getCardImageSrc(card, 'sm');
   const typeIcon  = card.type === 'note' ? '♩' : (card.type === 'alt' ? '♯' : '★');

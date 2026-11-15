@@ -1,0 +1,180 @@
+/* ===================================================
+   MUSICALA – polish.css  (v2.2)
+   Acabado visual de la mesa: ambiente que toma el color
+   de la nota en juego, carta central con profundidad y
+   brillo, mazo apilado, mano que avisa cuando te toca.
+   Solo decoración: no cambia tamaños ni disposición.
+   =================================================== */
+
+#screen-game {
+  --note-color: #5729FF;      /* lo actualiza ui.js con el color de la nota en juego */
+}
+
+/* ── Ambiente: un halo del color de la nota respira detrás de la mesa ── */
+.center-board { position: relative; }
+.center-board::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(120vw, 760px);
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle,
+    color-mix(in srgb, var(--note-color) 34%, transparent) 0%,
+    color-mix(in srgb, var(--note-color) 12%, transparent) 34%,
+    transparent 62%);
+  pointer-events: none;
+  z-index: 0;
+  transition: background 0.6s ease;
+  animation: plBreathe 5.5s ease-in-out infinite;
+}
+.center-board > * { position: relative; z-index: 1; }
+@keyframes plBreathe {
+  0%, 100% { opacity: 0.75; transform: translate(-50%, -50%) scale(0.94); }
+  50%      { opacity: 1;    transform: translate(-50%, -50%) scale(1.06); }
+}
+
+/* ── Carta central: borde luminoso, brillo que la recorre y pila debajo ── */
+.active-note-card {
+  border-color: color-mix(in srgb, var(--note-color) 45%, #fff);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.10) inset,
+    0 0 46px color-mix(in srgb, var(--note-color) 55%, transparent),
+    6px 8px 0 -2px rgba(255, 255, 255, 0.07),
+    11px 15px 0 -4px rgba(255, 255, 255, 0.04),
+    0 22px 46px rgba(0, 0, 0, 0.6) !important;
+}
+.active-note-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 255, 255, 0.42) 50%, transparent 62%);
+  transform: translateX(-130%);
+  pointer-events: none;
+  z-index: 3;
+}
+.active-note-card.ge-pop::after {
+  animation: plSheen 0.75s ease-out 0.1s both;
+}
+@keyframes plSheen {
+  from { transform: translateX(-130%); }
+  to   { transform: translateX(130%); }
+}
+
+/* ── Mazo: se ve apilado ── */
+.deck-pile {
+  overflow: visible;
+  box-shadow:
+    3px 3px 0 -1px #d9d2ee,
+    3px 3px 0 0 rgba(0, 0, 0, 0.45),
+    6px 6px 0 -1px #c6bde2,
+    6px 6px 0 0 rgba(0, 0, 0, 0.45),
+    0 14px 26px rgba(0, 0, 0, 0.5);
+}
+.deck-pile .pile-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* ── Mano: marco luminoso cuando es tu turno ── */
+.player-hand-area {
+  transition: border-color 0.35s ease, box-shadow 0.35s ease;
+}
+.player-hand-area.my-turn {
+  border-color: rgba(110, 231, 183, 0.55);
+  box-shadow:
+    0 0 0 1px rgba(110, 231, 183, 0.22),
+    0 0 34px rgba(110, 231, 183, 0.16),
+    inset 0 0 44px rgba(110, 231, 183, 0.06);
+}
+.player-hand-area.my-turn::before {
+  left: 8%;
+  right: 8%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(110, 231, 183, 0.95), transparent);
+  animation: plScan 2.6s ease-in-out infinite;
+}
+@keyframes plScan {
+  0%, 100% { opacity: 0.45; transform: scaleX(0.6); }
+  50%      { opacity: 1;    transform: scaleX(1); }
+}
+
+/* ── Cartas jugables: resplandor suave y brillo al pasar el dedo/ratón ── */
+.hand-cards .card.valid {
+  box-shadow:
+    0 0 0 1px rgba(110, 231, 183, 0.35),
+    0 0 18px rgba(110, 231, 183, 0.32),
+    0 10px 20px rgba(0, 0, 0, 0.4);
+  animation: plValid 2.2s ease-in-out infinite;
+}
+@keyframes plValid {
+  0%, 100% { box-shadow: 0 0 0 1px rgba(110, 231, 183, 0.30), 0 0 12px rgba(110, 231, 183, 0.22), 0 10px 20px rgba(0, 0, 0, 0.4); }
+  50%      { box-shadow: 0 0 0 1px rgba(110, 231, 183, 0.55), 0 0 24px rgba(110, 231, 183, 0.45), 0 10px 20px rgba(0, 0, 0, 0.4); }
+}
+.hand-cards .card .card-front::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 35%, rgba(255, 255, 255, 0.28) 50%, transparent 65%);
+  transform: translateX(-130%);
+  pointer-events: none;
+  z-index: 5;
+}
+@media (hover: hover) {
+  .hand-cards .card.valid:hover .card-front::after {
+    animation: plSheen 0.6s ease-out both;
+  }
+}
+.hand-cards .card.selected {
+  box-shadow:
+    0 0 0 2px var(--gold),
+    0 0 28px rgba(247, 217, 76, 0.55),
+    0 16px 26px rgba(0, 0, 0, 0.5);
+  animation: none;
+}
+
+/* ── Botones principales: destello que los recorre ── */
+.btn-primary,
+.btn-online {
+  position: relative;
+  overflow: hidden;
+}
+.btn-primary::after,
+.btn-online::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.30) 50%, transparent 60%);
+  transform: translateX(-130%);
+  pointer-events: none;
+  animation: plSheen 3.6s ease-in-out 1.2s infinite;
+}
+.btn-primary:disabled::after { animation: none; }
+
+/* ── Oponente en turno: borde del color de la nota ── */
+.opponent-slot {
+  transition: border-color 0.3s ease, transform 0.3s ease;
+}
+.opponent-slot.active-turn {
+  border-color: color-mix(in srgb, var(--note-color) 60%, #fff);
+  transform: translateY(-2px);
+}
+
+/* ── Contadores: pequeño salto al cambiar ── */
+@keyframes plBump {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.22); }
+  100% { transform: scale(1); }
+}
+.pl-bump { animation: plBump 0.32s var(--ease-spring); display: inline-block; }
+
+/* ── Pantalla de ganador: título con resplandor ── */
+.winner-title {
+  text-shadow: 0 0 28px rgba(247, 217, 76, 0.65), 0 4px 14px rgba(0, 0, 0, 0.6);
+  animation: plGlow 2.4s ease-in-out infinite;
+}
+@keyframes plGlow {
+  0%, 100% { text-shadow: 0 0 18px rgba(247, 217, 76, 0.45), 0 4px 14px rgba(0, 0, 0, 0.6); }
+  50%      { text-shadow: 0 0 40px rgba(247, 217, 76, 0.9), 0 4px 14px rgba(0, 0, 0, 0.6); }
+}

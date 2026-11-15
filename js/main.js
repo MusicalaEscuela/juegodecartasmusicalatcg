@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   //  Modal backdrop 
   document.getElementById('modal-overlay').addEventListener('click', (e) => {
-    if (e.target === e.currentTarget) closeModal();
+    if (e.target === e.currentTarget) dismissModal();
   });
 
 });

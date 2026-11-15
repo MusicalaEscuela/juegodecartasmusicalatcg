@@ -28,12 +28,15 @@ css/
   card-menu.css         Hoja de acciones de carta
   layout.css            Mesa mobile-first, zonas táctiles
   motion.css            Transiciones, reparto, cartas en vuelo
+  cardfx.css            Efectos de las cartas de efecto
+  polish.css            Acabado de la mesa (ambiente, brillos, mazo apilado)
   a11y.css              Foco, contraste, tamaños mínimos
 js/
   boot.js               Pantalla de carga, precarga, registro del service worker
   settings.js           Preferencias (localStorage)
   sfx.js                Efectos de sonido (Web Audio)
   fx.js                 Animaciones de cartas y vibración
+  cardfx.js             Efecto visual y sonoro propio de cada carta de efecto
   cards.js              Definición de cartas y validación de jugadas
   game.js               Reglas y CPU
   ui.js                 Renderizado e interacción
@@ -65,10 +68,7 @@ Después sube `CACHE_VERSION` en `sw.js` para que los dispositivos descarguen la
 
 ## Pendiente
 
-- **Cancelar una elección:** cerrar el diálogo de "elige un jugador" o de Nota de Paso deja
-  la carta gastada sin efecto y el turno sin avanzar.
-- **Contraste de las píldoras de nota** (texto blanco sobre RE y MI): cambiarlo toca los
-  colores de marca de las notas.
 - **Reglas de Firestore:** abiertas a cualquier usuario con sesión.
 - **Modo en línea:** los cambios de manejo de errores y "Volver a la sala" no se han probado
   con una partida real (requiere iniciar sesión con Google y dos jugadores).
+- **Fuentes locales e icono de 512 px desde el logo vectorial:** ver `docs/EMPAQUETADO-ANDROID.md`.

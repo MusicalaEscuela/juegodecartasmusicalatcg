@@ -57,7 +57,7 @@ const MSfx = (function () {
 
   /**
    * Reproduce un efecto.
-   * @param {string} kind  'play' | 'draw' | 'special' | 'error' | 'win' | 'scale' | 'select'
+   * @param {string} kind  'play' | 'cpu' | 'draw' | 'special' | 'error' | 'win' | 'scale' | 'select' | 'tap' | 'turn' | 'deal'
    * @param {string|string[]} opt  Nota (para 'play') o lista de notas (para 'scale').
    */
   function play(kind, opt) {
@@ -66,6 +66,22 @@ const MSfx = (function () {
       case 'play':
         tone((opt && NOTE_FREQ[opt]) || 392, 0.18, 'triangle', 0.16);
         break;
+      case 'tap':
+        tone(520, 0.04, 'sine', 0.04);
+        break;
+      case 'turn':
+        tone(587, 0.09, 'sine', 0.08);
+        tone(880, 0.14, 'sine', 0.07, 0.08);
+        break;
+      case 'cpu':
+        // Jugada de la CPU: misma nota, más suave y una octava abajo.
+        tone(((opt && NOTE_FREQ[opt]) || 330) / 2, 0.16, 'triangle', 0.10);
+        break;
+      case 'deal': {
+        const n = Math.min(typeof opt === 'number' ? opt : 7, 9);
+        for (let i = 0; i < n; i++) tone(240 + i * 14, 0.05, 'sine', 0.05, i * 0.07);
+        break;
+      }
       case 'select':
         tone(660, 0.07, 'sine', 0.09);
         break;

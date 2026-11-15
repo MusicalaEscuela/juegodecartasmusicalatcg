@@ -17,6 +17,7 @@ const MSettings = (function () {
     scalesEnabled:   true,     // permitir jugar escalas (3+ notas)
     animSpeed:      'normal',  // 'lenta' | 'normal' | 'rapida'
     soundEnabled:    true,     // efectos de sonido
+    hapticsEnabled:  true,     // vibración en móviles compatibles
     privacyScreen:   true,     // pantalla "pasa el dispositivo"
     passCountdown:   false,    // cuenta regresiva de 3s antes de mostrar la mano
     tutorialSeen:    false,    // si ya vio el tutorial alguna vez

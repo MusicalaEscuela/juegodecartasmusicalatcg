@@ -231,6 +231,7 @@ function renderSetupOptions() {
       ${row('🔒', 'Pasar dispositivo', 'Privacidad multijugador local', _optSeg('privacyScreen', S.privacyScreen, yn))}
       ${row('⏱️', 'Cuenta regresiva', '3 s antes de mostrar la mano', _optSeg('passCountdown', S.passCountdown, yn))}
       ${row('🔊', 'Sonido', 'Efectos del juego', _optSeg('soundEnabled', S.soundEnabled, yn))}
+      ${row('📳', 'Vibración', 'En móviles compatibles', _optSeg('hapticsEnabled', S.hapticsEnabled, yn))}
     </div>
   `;
 }
@@ -240,6 +241,7 @@ function setSetupOption(key, value) {
   MSettings.set(key, value);
   renderSetupOptions();
   if (key === 'soundEnabled' && value === true && window.MSfx) MSfx.play('select');
+  if (key === 'hapticsEnabled' && value === true && window.MFx) MFx.haptic('play');
 }
 
 function setPlayerType(idx, isHuman) { setupPlayers[idx].isHuman = isHuman; renderSetup(); }
@@ -313,6 +315,7 @@ function renderOpponents() {
     const slot = document.createElement('div');
     slot.className = 'opponent-slot'
       + (G.currentPlayer === i ? ' active-turn' : '');
+    slot.dataset.playerIdx = i;
 
     const miniCards = p.hand.slice(0, 14).map(() =>
       `<div class="opp-mini-card"><img src="assets/backs/back-sm.webp" width="20" height="28" decoding="async" onerror="this.style.display='none'" alt=""></div>`
@@ -553,6 +556,7 @@ function buildCardElement(card, idx, interactive, mask) {
         handleCardClick(idx);
       } else {
         if (window.MSfx) MSfx.play('error');
+        if (window.MFx) MFx.haptic('error');
         showToast('Esa carta no es válida ahora.');
       }
     });
@@ -561,7 +565,7 @@ function buildCardElement(card, idx, interactive, mask) {
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
         if (valid) handleCardClick(idx);
-        else { if (window.MSfx) MSfx.play('error'); showToast('Esa carta no es válida ahora.'); }
+        else { if (window.MSfx) MSfx.play('error'); if (window.MFx) MFx.haptic('error'); showToast('Esa carta no es válida ahora.'); }
       }
     });
   }
@@ -599,11 +603,20 @@ function handleCardClick(idx) {
   const playFn = isOnline ? onlineHumanPlayCard : humanPlayCard;
   const alreadySelected = G.selectedCards.includes(idx);
 
+  // Datos para la animación de vuelo (se capturan antes de que la mano se redibuje).
+  const playedCard = hand[idx];
+  const cardEl     = document.getElementById('hand-cards').children[idx];
+  const fromRect   = window.MFx ? MFx.rectOf(cardEl) : null;
+  const flyPlayed  = () => {
+    if (window.MFx && fromRect && playedCard) MFx.playCard(fromRect, getCardImageSrc(playedCard, 'sm'));
+  };
+
   if (alreadySelected) {
     if (G.selectedCards.length === 1) {
       G.selectedCards = [];
       const result = playFn(idx);
       if (!result.ok) { showToast(result.error || 'No puedes jugar esa carta.'); renderGame(); return; }
+      flyPlayed();
       handlePostPlay(result);
     } else {
       G.selectedCards = G.selectedCards.filter(i => i !== idx);
@@ -614,11 +627,13 @@ function handleCardClick(idx) {
       G.selectedCards = [];
       const result = playFn(idx);
       if (!result.ok) { showToast(result.error || 'No puedes jugar esa carta.'); renderGame(); return; }
+      flyPlayed();
       handlePostPlay(result);
       return;
     }
     G.selectedCards.push(idx);
     if (window.MSfx) MSfx.play('select');
+    if (window.MFx) MFx.haptic('tap');
     renderHand(); updateScaleButton();
   }
 }
@@ -693,8 +708,14 @@ function handlePostPlay(result) {
   if (window.MSfx && G.winner === null) {
     if (result.scalePlayOrder && result.scalePlayOrder.length) MSfx.play('scale', result.scalePlayOrder);
     else if (result.needsTarget || result.needsNotePasoChoice || result.phase === 'improvisacion') MSfx.play('special');
-    else MSfx.play('play');
+    else {
+      // La nota jugada suena con su altura real; las especiales, con su propio efecto.
+      const top = G.discard && G.discard[G.discard.length - 1];
+      if (top && top.type === 'special') MSfx.play('special');
+      else MSfx.play('play', top && top.type === 'note' ? top.note : undefined);
+    }
   }
+  if (window.MFx && G.winner === null) MFx.haptic(result.scalePlayOrder || result.needsTarget ? 'special' : 'play');
 
   const continueTurnFlow = () => {
     renderGame();
@@ -853,6 +874,7 @@ function showWinnerScreen() {
   `;
 
   if (window.MSfx) MSfx.play('win');
+  if (window.MFx) MFx.haptic('win');
   spawnConfetti();
   showScreen('screen-winner');
 }
@@ -918,6 +940,9 @@ function scheduleNextTurn() {
     } else {
       renderGame();
     }
+    // Aviso sutil de "te toca".
+    if (window.MSfx) MSfx.play('turn');
+    if (window.MFx) MFx.haptic('turn');
     return;
   }
 
@@ -930,10 +955,29 @@ function scheduleAI() { scheduleNextTurn(); }
 
 function runAIStep() {
   if (!G || G.winner || isHumanTurn()) return;
-  aiTurn(G.currentPlayer);
+  const aiIdx      = G.currentPlayer;
+  const discardLen = G.discard.length;
+  const handLen    = G.players[aiIdx].hand.length;
+  aiTurn(aiIdx);
   renderGame();
+  animateAIStep(aiIdx, discardLen, handLen);
   if (G.winner !== null) { setTimeout(() => showWinnerScreen(), 700); return; }
   scheduleNextTurn();
+}
+
+// Feedback visual y sonoro de la jugada de la CPU (solo presentación).
+function animateAIStep(aiIdx, discardLenBefore, handLenBefore) {
+  try {
+    const slot = window.MFx ? MFx.opponentSlot(aiIdx) : null;
+    if (G.discard.length > discardLenBefore) {
+      const top = G.discard[G.discard.length - 1];
+      if (slot && top) MFx.playCard(MFx.rectOf(slot), getCardImageSrc(top, 'sm'));
+      if (window.MSfx) MSfx.play('cpu', top && top.type === 'note' ? top.note : undefined);
+    } else if (G.players[aiIdx].hand.length > handLenBefore) {
+      if (slot) MFx.drawCard(slot);
+      if (window.MSfx) MSfx.play('draw');
+    }
+  } catch (err) { /* los efectos nunca deben interrumpir la partida */ }
 }
 
 // ── Utils ─────────────────────────────────────────────────────────────────────

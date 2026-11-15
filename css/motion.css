@@ -1,0 +1,103 @@
+/* ===================================================
+   MUSICALA – motion.css  (v2.1)
+   Transiciones entre pantallas, reparto, cartas que
+   vuelan y respuesta al toque.
+   =================================================== */
+
+/* ── Transición entre pantallas ── */
+@keyframes mvScreenIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+.screen.active {
+  animation: mvScreenIn var(--dur-base) var(--ease-out) backwards;
+}
+/* La mesa no se desplaza (tiene overlays fijos dentro): solo aparece. */
+@keyframes mvFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+#screen-game.active {
+  animation-name: mvFadeIn;
+}
+
+/* ── Carta fantasma en vuelo (fx.js) ── */
+.fx-ghost {
+  position: fixed;
+  z-index: 450;
+  pointer-events: none;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55);
+  will-change: transform, opacity;
+}
+.fx-ghost img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Reparto inicial: entra desde el mazo y se voltea ── */
+@keyframes mvDealIn {
+  from { opacity: 0; transform: translate(-40px, -60px) rotate(-10deg) scale(0.7); }
+  to   { opacity: 1; transform: none; }
+}
+@keyframes mvDealFlip {
+  from { transform: rotateY(180deg); }
+  to   { transform: rotateY(0deg); }
+}
+.hand-cards.dealing .card {
+  animation: mvDealIn 360ms var(--ease-out) both;
+  animation-delay: calc(var(--deal-i, 0) * 70ms);
+}
+.hand-cards.dealing .card .card-inner {
+  animation: mvDealFlip 420ms var(--ease-out) both;
+  animation-delay: calc(var(--deal-i, 0) * 70ms + 80ms);
+}
+body[data-anim="rapida"] .hand-cards.dealing .card,
+body[data-anim="rapida"] .hand-cards.dealing .card .card-inner {
+  animation-duration: 200ms;
+  animation-delay: calc(var(--deal-i, 0) * 35ms);
+}
+
+/* ── Respuesta inmediata al toque ── */
+.btn-primary:active,
+.btn-secondary:active,
+.btn-online:active,
+.btn-icon:active,
+.modal-btn:active,
+.player-select-btn:active,
+.opt-seg-btn:active,
+.type-btn:active,
+.help-btn:active {
+  transform: scale(0.96);
+}
+.hand-cards .card.valid:active {
+  transform: translateY(-4px) scale(0.97);
+}
+
+/* El mazo "late" al robar. */
+@keyframes mvDeckTap {
+  50% { transform: scale(0.93); }
+}
+.deck-pile.fx-tap {
+  animation: mvDeckTap 180ms var(--ease-out);
+}
+
+/* ── Menos movimiento: sin vuelos, sin confeti, sin bucles ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+  .fx-ghost,
+  .winner-confetti {
+    display: none !important;
+  }
+}

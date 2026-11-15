@@ -120,6 +120,14 @@ document.addEventListener('DOMContentLoaded', () => {
     showScreen('screen-intro');
   });
 
+  //  Sonido/vibración sutil en cualquier botón (un solo listener delegado)
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest && e.target.closest('button');
+    if (!btn || btn.disabled) return;
+    if (window.MSfx) MSfx.play('tap');
+    if (window.MFx) MFx.haptic('tap');
+  }, { passive: true });
+
   //  Modal backdrop 
   document.getElementById('modal-overlay').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeModal();
@@ -141,6 +149,7 @@ function startGame() {
   initGame(setupPlayers);
   showScreen('screen-game');
   renderGame();
+  if (window.MFx) MFx.dealHand();
 
   // Tutorial automático la primera vez que se juega.
   if (window.MTutorial && MTutorial.shouldAutoShow()) {
@@ -156,12 +165,21 @@ function handleDrawClick() {
   const drawFn = G._onlineMode ? onlineHumanDraw : humanDraw;
   const result = drawFn();
   if (!result.ok) {
-    if (result.error) { showToast(result.error); if (window.MSfx) MSfx.play('error'); }
+    if (result.error) { showToast(result.error); if (window.MSfx) MSfx.play('error'); if (window.MFx) MFx.haptic('error'); }
     return;
   }
   if (window.MSfx) MSfx.play('draw');
+  if (window.MFx) MFx.haptic('draw');
   renderGame();
   animateDrawnCard();
+  if (window.MFx) {
+    const hand = document.getElementById('hand-cards');
+    MFx.drawCard((hand && hand.lastElementChild) || hand);
+    const pile = document.getElementById('deck-pile');
+    if (pile) {
+      pile.classList.remove('fx-tap'); void pile.offsetWidth; pile.classList.add('fx-tap');
+    }
+  }
   if (result.drewPlayable) {
     showToast('🃏 La carta robada es válida. ¡Puedes jugarla ahora!');
   } else if (result.drew) {
@@ -315,6 +333,7 @@ function renderGameSettings() {
   host.innerHTML = `
     <div class="opt-grid">
       ${row('🔊', 'Sonido', _optSeg('soundEnabled', S.soundEnabled, yn, 'setGameSetting'))}
+      ${row('📳', 'Vibración', _optSeg('hapticsEnabled', S.hapticsEnabled, yn, 'setGameSetting'))}
       ${row('⚡', 'Velocidad', _optSeg('animSpeed', S.animSpeed, [
         { val: 'lenta', label: 'Lenta' }, { val: 'normal', label: 'Normal' }, { val: 'rapida', label: 'Rápida' }], 'setGameSetting'))}
       ${row('🤖', 'Dificultad CPU', _optSeg('difficulty', S.difficulty, [

@@ -7,12 +7,6 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  //  Fonts (Nunito + Fredoka One) 
-  const fontLink = document.createElement('link');
-  fontLink.rel = 'stylesheet';
-  fontLink.href = 'https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;900&display=swap';
-  document.head.appendChild(fontLink);
-
   //  Card Action Menu  inicializar eventos 
   initCardActionMenu();
 
@@ -132,6 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
 //  Start game 
 
 function startGame() {
+  // Los envoltorios de eventos deben estar listos antes del primer render.
+  if (typeof window.initGameEvents === 'function') window.initGameEvents();
+
   if (typeof window.startBackgroundMusic === 'function') {
     window.startBackgroundMusic();
   }

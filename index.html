@@ -2,39 +2,66 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Musicala - Juego de Cartas</title>
   <meta name="theme-color" content="#050613" />
   <meta name="description" content="Musicala: el juego de cartas musical. Juega contra la CPU, en multijugador local o en línea." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32.png" />
+  <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Musicala" />
+  <!-- Pantalla de carga: estilos en línea para que se pinte antes que cualquier otra cosa -->
+  <style>
+    #app-loader{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:#050613;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;transition:opacity .3s ease;animation:appLoaderFailsafe 0s linear 8s forwards}
+    #app-loader.is-done{opacity:0;pointer-events:none}
+    #app-loader img{width:150px;height:auto}
+    .app-loader-track{width:min(240px,60vw);height:6px;border-radius:3px;background:rgba(255,255,255,.14);overflow:hidden}
+    #app-loader-bar{height:100%;width:100%;transform-origin:left center;transform:scaleX(0);background:linear-gradient(90deg,#0C41C4,#5729FF,#CE0071);transition:transform .2s ease}
+    #app-loader-label{margin:0;font-size:13px;color:rgba(255,255,255,.74)}
+    @keyframes appLoaderFailsafe{to{visibility:hidden}}
+  </style>
+  <noscript><style>#app-loader{display:none}</style></noscript>
+  <link rel="preload" as="image" href="logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800;900&display=swap" media="print" onload="this.media='all'" />
-  <link rel="stylesheet" href="css/tokens.css?v=210-10" />
-  <link rel="stylesheet" href="css/style.css?v=210-10" />
-  <link rel="stylesheet" href="css/card.css?v=210-10" />
-  <link rel="stylesheet" href="css/animations.css?v=210-10" />
-  <link rel="stylesheet" href="css/enhancements.css?v=210-10" />
-  <link rel="stylesheet" href="css/game-events.css?v=210-10" />
-  <link rel="stylesheet" href="css/card-menu.css?v=210-10" />
-  <link rel="stylesheet" href="css/layout.css?v=210-10" />
-  <link rel="stylesheet" href="css/motion.css?v=210-10" />
-  <link rel="stylesheet" href="css/a11y.css?v=210-10" />
+  <link rel="stylesheet" href="css/tokens.css?v=210-12" />
+  <link rel="stylesheet" href="css/style.css?v=210-12" />
+  <link rel="stylesheet" href="css/card.css?v=210-12" />
+  <link rel="stylesheet" href="css/animations.css?v=210-12" />
+  <link rel="stylesheet" href="css/enhancements.css?v=210-12" />
+  <link rel="stylesheet" href="css/game-events.css?v=210-12" />
+  <link rel="stylesheet" href="css/card-menu.css?v=210-12" />
+  <link rel="stylesheet" href="css/layout.css?v=210-12" />
+  <link rel="stylesheet" href="css/motion.css?v=210-12" />
+  <link rel="stylesheet" href="css/a11y.css?v=210-12" />
 <!-- Scripts (defer: no bloquean el render; se ejecutan en orden) -->
-<script defer src="js/settings.js?v=210-10"></script>
-<script defer src="js/sfx.js?v=210-10"></script>
-<script defer src="js/fx.js?v=210-10"></script>
-<script defer src="js/cards.js?v=210-10"></script>
-<script defer src="js/game.js?v=210-10"></script>
-<script defer src="js/ui.js?v=210-10"></script>
-<script defer src="js/persist.js?v=210-10"></script>
-<script defer src="js/tutorial.js?v=210-10"></script>
-<script defer src="js/firebase.js?v=210-10"></script>
-<script defer src="js/online.js?v=210-10"></script>
-<script defer src="js/game-events.js?v=210-10"></script>
-<script defer src="js/audio.js?v=210-10"></script>
-<script defer src="js/main.js?v=210-10"></script>
+<script defer src="js/boot.js?v=210-12"></script>
+<script defer src="js/settings.js?v=210-12"></script>
+<script defer src="js/sfx.js?v=210-12"></script>
+<script defer src="js/fx.js?v=210-12"></script>
+<script defer src="js/cards.js?v=210-12"></script>
+<script defer src="js/game.js?v=210-12"></script>
+<script defer src="js/ui.js?v=210-12"></script>
+<script defer src="js/persist.js?v=210-12"></script>
+<script defer src="js/tutorial.js?v=210-12"></script>
+<script defer src="js/firebase.js?v=210-12"></script>
+<script defer src="js/online.js?v=210-12"></script>
+<script defer src="js/game-events.js?v=210-12"></script>
+<script defer src="js/audio.js?v=210-12"></script>
+<script defer src="js/main.js?v=210-12"></script>
 </head>
 <body>
+<!-- Pantalla de carga con progreso (la cierra js/boot.js) -->
+<div id="app-loader" role="progressbar" aria-label="Cargando Musicala" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <img src="logo.png" alt="Musicala" width="150" height="92" />
+  <div class="app-loader-track"><div id="app-loader-bar"></div></div>
+  <p id="app-loader-label">Cargando…</p>
+</div>
+
 <audio id="bg-music" src="assets/audio/musicala_bg_loop.mp3" preload="none" loop></audio>
 
 <!-- 
@@ -97,6 +124,7 @@
       <button class="btn-online btn-intro-main" id="btn-intro-online">Jugar en línea</button>
       <button class="btn-secondary" id="btn-intro-library">Biblioteca de cartas</button>
       <button class="btn-secondary" id="btn-intro-rules">Ver reglas</button>
+      <button class="btn-secondary" id="btn-intro-install" hidden>⬇ Instalar la app</button>
     </div>
 
   </div>

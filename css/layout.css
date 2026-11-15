@@ -231,3 +231,6 @@
   text-align: center;
   pointer-events: none;
 }
+
+/* Los avisos de jugadas solo tienen sentido sobre la mesa. */
+body:not(:has(#screen-game.active)) #event-feed { display: none; }

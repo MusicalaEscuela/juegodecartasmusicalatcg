@@ -1,4 +1,4 @@
-﻿/* ===================================================
+/* ===================================================
    MUSICALA  game.js  v2
    Lgica central + soporte multijugador local
    =================================================== */
@@ -97,6 +97,8 @@ function checkMusicala(playerIdx) {
 }
 
 function checkWinner(playerIdx) {
+  // Ya hay ganador: no volver a anunciarlo (antes el aviso salía duplicado).
+  if (G.winner !== null) return true;
   if (G.players[playerIdx].hand.length === 0) {
     G.winner = playerIdx;
     G.phase = 'ended';

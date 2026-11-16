@@ -23,6 +23,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   //  Online mode 
   document.getElementById('btn-intro-online').addEventListener('click', async () => {
+    // En la app Android el inicio de sesión con Google por ventana emergente no funciona
+    // (requiere un plugin nativo; ver docs/EMPAQUETADO-ANDROID.md).
+    if (window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) {
+      showToast('El modo en línea todavía no está disponible en la app. Puedes jugarlo desde la versión web.', 5000);
+      return;
+    }
     if (!navigator.onLine) {
       showToast('Sin conexión a internet. El modo en línea no está disponible ahora.', 4000);
       return;

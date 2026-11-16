@@ -77,7 +77,9 @@
   setTimeout(finish, MAX_WAIT_MS);
 
   // ── Service worker (offline) ──
-  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
+  // En la app Android (Capacitor) el juego ya va dentro del APK: no hace falta.
+  const isNativeApp = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+  if (!isNativeApp && 'serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost' || location.hostname === '127.0.0.1')) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('sw.js').catch((err) => {
         console.warn('[Musicala] No se pudo registrar el service worker:', err);

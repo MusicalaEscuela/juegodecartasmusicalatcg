@@ -7,6 +7,38 @@ empaquetado. Este documento explica las dos rutas posibles y lo que hay que reso
 > confirma los comandos en la documentación oficial de Capacitor / Bubblewrap y los requisitos
 > vigentes en Play Console.
 
+## 0. APK de prueba (ya configurado)
+
+El proyecto ya tiene Capacitor en `android-app/` y genera un APK de prueba (sin firmar para
+Play Store, solo para instalar en teléfonos). Requisitos: Node.js, el SDK de Android de
+Android Studio y **JDK 21** (el JDK que trae Android Studio es más nuevo y Gradle lo rechaza).
+
+```bash
+cd android-app
+```
+
+```bash
+npm install
+```
+
+```bash
+npm run sync
+```
+
+Luego abre `android-app/android` en Android Studio y usa *Build → Build APK(s)*, o desde la
+terminal con `JAVA_HOME` apuntando al JDK 21: `cd android && gradlew.bat assembleDebug`.
+El APK queda en `android-app/android/app/build/outputs/apk/debug/app-debug.apk`.
+
+Notas de esta versión:
+- `npm run sync` copia el juego (raíz del repositorio) a `android-app/www` y lo pasa al
+  proyecto Android. Hay que repetirlo cada vez que cambie el juego.
+- La ruta del proyecto tiene una tilde ("Programación"); por eso
+  `android-app/android/gradle.properties` incluye `android.overridePathCheck=true`.
+- Dentro de la app el modo en línea muestra un aviso: el inicio de sesión con Google
+  necesita un plugin nativo (sección 4.3).
+- El botón Atrás de Android cierra la app; la partida local se guarda y se puede continuar.
+- Para la Play Store hace falta un `.aab` firmado (*Build → Generate Signed Bundle*).
+
 ## 1. Qué ruta elegir
 
 | | **TWA (Trusted Web Activity)** | **Capacitor** |

@@ -10,6 +10,9 @@
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
+  // Cada pantalla empieza arriba (antes, al empezar desde el final de la configuración,
+  // la mesa aparecía desplazada y se veía en blanco en el teléfono).
+  window.scrollTo(0, 0);
   if (id === 'screen-intro' && typeof updateContinueButton === 'function') updateContinueButton();
 }
 

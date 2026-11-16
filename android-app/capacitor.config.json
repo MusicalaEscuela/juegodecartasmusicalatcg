@@ -1,0 +1,8 @@
+{
+  "appId": "com.musicala.cartas",
+  "appName": "Musicala",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#050613"
+  }
+}

@@ -5,3 +5,8 @@
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Android (Capacitor)
+android-app/node_modules/
+android-app/www/
+dist/
